@@ -9,6 +9,7 @@ import { KeyPairModule } from './modules/keypair/keypair.module';
 import { SessionModule } from './modules/session/session.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { RoleModule } from './modules/role/role.module';
+import { AuditLogModule } from './modules/audit-log/audit-log.module';
 import { AppController } from './app.controller';
 
 @Module({
@@ -25,6 +26,7 @@ import { AppController } from './app.controller';
     SessionModule,
     AuthModule,
     RoleModule,
+    AuditLogModule,
   ],
   controllers: [AppController],
   providers: [],

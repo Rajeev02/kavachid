@@ -3,6 +3,7 @@ import { RoleService } from './role.service';
 import { CreateRoleDto, CreatePermissionDto, AssignPermissionDto, AssignRoleDto } from './dto/role.dto';
 import { TenantGuard } from '../tenant/tenant.guard';
 import { AuthGuard } from '../auth/auth.guard';
+import { Audit } from '../audit-log/audit.decorator';
 
 @Controller()
 @UseGuards(TenantGuard, AuthGuard)
@@ -11,6 +12,7 @@ export class RoleController {
   constructor(private readonly roleService: RoleService) {}
 
   @Post('roles')
+  @Audit({ action: 'role.create', resourceType: 'role' })
   async createRole(@Body() dto: CreateRoleDto) {
     const role = await this.roleService.createRole(dto.name, dto.description);
     return {
@@ -20,6 +22,7 @@ export class RoleController {
   }
 
   @Post('permissions')
+  @Audit({ action: 'permission.create', resourceType: 'permission' })
   async createPermission(@Body() dto: CreatePermissionDto) {
     const permission = await this.roleService.createPermission(dto.resource, dto.action);
     return {
@@ -29,6 +32,7 @@ export class RoleController {
   }
 
   @Post('roles/:roleId/permissions')
+  @Audit({ action: 'role.assign_permission', resourceType: 'role' })
   async assignPermission(
     @Param('roleId') roleId: string,
     @Body() dto: AssignPermissionDto
@@ -40,6 +44,7 @@ export class RoleController {
   }
 
   @Post('users/:userId/roles')
+  @Audit({ action: 'user.assign_role', resourceType: 'user' })
   async assignRole(
     @Param('userId') userId: string,
     @Body() dto: AssignRoleDto

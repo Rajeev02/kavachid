@@ -1,5 +1,6 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import axios from 'axios';
 
 @Injectable()
 export class OutboxService implements OnModuleInit, OnModuleDestroy {
@@ -41,32 +42,64 @@ export class OutboxService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
-   * Poll and process pending events.
+   * Poll and process pending events with exponential backoff.
    */
   async processOutbox() {
     if (this.isPolling) return;
     this.isPolling = true;
 
     try {
-      // Fetch up to 20 pending events
+      // Fetch up to 20 pending events that haven't failed completely
       const events = await this.prisma.outboxEvent.findMany({
-        where: { status: 'pending' },
+        where: {
+          status: 'pending',
+          retryCount: { lt: 5 },
+        },
         take: 20,
         orderBy: { createdAt: 'asc' },
       });
 
       if (events.length === 0) return;
 
-      this.logger.log(`Found ${events.length} pending outbox events to process.`);
+      const now = new Date();
+      // Filter events by backoff: wait 2^retryCount seconds between retries
+      const eligibleEvents = events.filter((event) => {
+        if (event.retryCount === 0) return true;
+        const backoffMs = Math.pow(2, event.retryCount) * 1000;
+        const elapsedMs = now.getTime() - event.createdAt.getTime();
+        return elapsedMs >= backoffMs;
+      });
 
-      for (const event of events) {
+      if (eligibleEvents.length === 0) return;
+
+      this.logger.log(`Found ${eligibleEvents.length} eligible outbox events to process.`);
+
+      const webhookUrl = process.env.WEBHOOK_URL || 'http://localhost:3000/webhook';
+
+      for (const event of eligibleEvents) {
         try {
           this.logger.debug(
-            `Dispatching event: ${event.eventType} (ID: ${event.id}) for tenant: ${event.tenantId}`
+            `Dispatching event: ${event.eventType} (ID: ${event.id}) for tenant: ${event.tenantId} to ${webhookUrl}`
           );
 
-          // Simulated dispatch - in V1, we log and mark processed. 
-          // Future implementations can add webhook HTTP triggers.
+          await axios.post(
+            webhookUrl,
+            {
+              id: event.id,
+              tenantId: event.tenantId,
+              eventType: event.eventType,
+              payload: event.payload,
+              createdAt: event.createdAt,
+            },
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                'X-KavachID-Event': event.eventType,
+              },
+              timeout: 5000,
+            },
+          );
+
           await this.prisma.outboxEvent.update({
             where: { id: event.id },
             data: {
@@ -75,12 +108,17 @@ export class OutboxService implements OnModuleInit, OnModuleDestroy {
             },
           });
         } catch (error) {
-          this.logger.error(`Failed to process outbox event ${event.id}: ${error.message}`);
+          const nextRetryCount = event.retryCount + 1;
+          const status = nextRetryCount >= 5 ? 'failed' : 'pending';
+          this.logger.error(
+            `Failed to dispatch outbox event ${event.id} (attempt ${nextRetryCount}/5): ${error.message}`
+          );
+
           await this.prisma.outboxEvent.update({
             where: { id: event.id },
             data: {
-              status: 'failed',
-              retryCount: event.retryCount + 1,
+              status,
+              retryCount: nextRetryCount,
             },
           });
         }

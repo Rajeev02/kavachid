@@ -2,6 +2,7 @@ import { Controller, Post, Get, Body, Param, UseGuards, ValidationPipe, UsePipes
 import { UserService } from './user.service';
 import { RegisterUserDto, VerifyCredentialsDto } from './dto/user.dto';
 import { TenantGuard } from '../tenant/tenant.guard';
+import { Audit } from '../audit-log/audit.decorator';
 
 @Controller('users')
 @UseGuards(TenantGuard)
@@ -10,6 +11,7 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post('register')
+  @Audit({ action: 'user.register', resourceType: 'user' })
   async register(@Body() dto: RegisterUserDto) {
     const user = await this.userService.registerUser(dto.email, dto.password, dto.username, dto.metadata);
     return {

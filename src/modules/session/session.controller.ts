@@ -5,6 +5,7 @@ import { LoginDto, RefreshDto } from './dto/session.dto';
 import { TenantGuard } from '../tenant/tenant.guard';
 import { CryptoService } from '../crypto/crypto.service';
 import { KeyPairService } from '../keypair/keypair.service';
+import { Audit } from '../audit-log/audit.decorator';
 
 @Controller('auth')
 @UseGuards(TenantGuard)
@@ -17,6 +18,7 @@ export class SessionController {
   ) {}
 
   @Post('login')
+  @Audit({ action: 'auth.login', resourceType: 'session' })
   async login(
     @Req() req: Request,
     @Body() dto: LoginDto,
@@ -43,6 +45,7 @@ export class SessionController {
   }
 
   @Post('refresh')
+  @Audit({ action: 'auth.refresh', resourceType: 'session' })
   async refresh(
     @Req() req: Request,
     @Body() dto: RefreshDto,
@@ -66,6 +69,7 @@ export class SessionController {
   }
 
   @Post('logout')
+  @Audit({ action: 'auth.logout', resourceType: 'session' })
   async logout(@Body() dto: RefreshDto) {
     return this.sessionService.revoke(dto.refreshToken);
   }

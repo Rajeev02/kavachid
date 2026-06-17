@@ -4,6 +4,8 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
+import axios from 'axios';
+import { OutboxService } from './../src/modules/outbox/outbox.service';
 
 import { PrismaService } from './../src/modules/database/prisma.service';
 
@@ -287,6 +289,86 @@ describe('AppController (e2e)', () => {
           expect(res.body.permissions).toBeDefined();
           expect(res.body.permissions.length).toBeGreaterThanOrEqual(1);
         });
+    });
+  });
+
+  describe('Observability: Audit Logging & Webhooks (e2e)', () => {
+    let axiosPostSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      axiosPostSpy = jest.spyOn(axios, 'post').mockImplementation(() => Promise.resolve({ status: 200 }));
+    });
+
+    afterEach(() => {
+      axiosPostSpy.mockRestore();
+    });
+
+    it('should create audit log entries in the database for audited actions', async () => {
+      const email = `audit-e2e-${Date.now()}@kavachid.local`;
+      const password = 'SuperSecretUserPassword123!';
+
+      // Trigger a registration (which is audited as user.register)
+      await request(app.getHttpServer())
+        .post('/users/register')
+        .set('x-tenant-id', tenantId)
+        .send({ email, password })
+        .expect(201);
+
+      // Wait a moment for async interceptor log writing
+      await new Promise((r) => setTimeout(r, 200));
+
+      // Check if audit log was written to database
+      const logs = await prisma.auditLog.findMany({
+        where: {
+          tenantId,
+          action: 'user.register',
+        },
+      });
+
+      expect(logs.length).toBeGreaterThanOrEqual(1);
+      expect(logs[0].resourceType).toBe('user');
+      expect(logs[0].actorId).toBe(logs[0].resourceId); // Since user.register maps actorId to resourceId
+    });
+
+    it('should dispatch outbox events using webhook and retry on failure', async () => {
+      // Clear outbox first to have a clean slate for this test
+      await prisma.outboxEvent.deleteMany({ where: { tenantId } });
+
+      // Mock axios to fail
+      axiosPostSpy.mockImplementation(() => Promise.reject(new Error('Webhook receiver down')));
+
+      const outboxService = app.get<OutboxService>(OutboxService);
+
+      // Create an outbox event
+      await outboxService.createEvent(tenantId, 'TestWebhookEvent', { hello: 'world' });
+
+      // Process outbox once (should try and fail)
+      await outboxService.processOutbox();
+
+      // Check database to see if retry count was incremented and status is still pending (or failed)
+      let events = await prisma.outboxEvent.findMany({
+        where: { tenantId, eventType: 'TestWebhookEvent' },
+      });
+
+      expect(events.length).toBe(1);
+      expect(events[0].status).toBe('pending');
+      expect(events[0].retryCount).toBe(1);
+
+      // Mock axios to succeed now
+      axiosPostSpy.mockImplementation(() => Promise.resolve({ status: 200 }));
+
+      // Wait at least 2 seconds (backoff for retryCount=1 is 2 seconds: 2^1 = 2s)
+      await new Promise((r) => setTimeout(r, 2100));
+
+      // Process outbox again (should succeed)
+      await outboxService.processOutbox();
+
+      events = await prisma.outboxEvent.findMany({
+        where: { tenantId, eventType: 'TestWebhookEvent' },
+      });
+
+      expect(events[0].status).toBe('processed');
+      expect(events[0].processedAt).toBeDefined();
     });
   });
 });
