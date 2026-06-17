@@ -109,44 +109,49 @@ npx ts-node test-kse.ts
 
 ---
 
-## 📦 Publishing the SDKs
+## 📦 Versioning & Publishing the SDKs
 
-The Kavach ecosystem uses a suite of automated shell scripts to publish your SDKs to their respective global registries.
+The Kavach ecosystem uses a centralized monorepo auto-versioning script to keep all 6 SDKs perfectly in sync.
 
-### Web & React Native (NPM)
+### 1. Bump the Version
+Before releasing a new version, run the automated script from the root directory:
+```bash
+node bump-version.js
+```
+*This reads the master `VERSION` file, automatically increments the patch number (e.g., 1.0.2 -> 1.0.3), and securely synchronizes all `package.json`, `setup.py`, `pubspec.yaml`, `build.gradle.kts`, and `KavachSDK.podspec` files across the monorepo.*
+
+### 2. Publish to Global Registries
+Once the versions are bumped, run the following commands to push the packages to their respective registries:
+
+**Web & React Native (NPM)**
 ```bash
 ./publish.sh
 ```
-*Publishes `@rajeev02/kavach-web` and `@rajeev02/kavach-react-native` to the NPM Registry.*
 
-### iOS (CocoaPods)
-Navigate to `sdks/kavach-ios` and run:
-```bash
-pod trunk push KavachSDK.podspec
-```
-
-### Android (Maven Central)
-Navigate to `sdks/kavach-android` and run:
-```bash
-./gradlew publishToMavenLocal # For local testing
-# Or configure Sonatype credentials for Maven Central
-```
-
-### Flutter (Pub.dev)
+**Flutter (Pub.dev)**
 ```bash
 ./publish-flutter.sh
 ```
 
-### Python (PyPI)
+**Python (PyPI)**
 ```bash
 ./publish-python.sh
 ```
 
-### Go (Go Proxy)
+**Go (Go Proxy)**
 ```bash
-./publish-go.sh v1.0.0
+./publish-go.sh
 ```
-*Automatically tags the repository so the global Go Proxy indexes the new module version.*
+
+**iOS (CocoaPods)**
+```bash
+cd sdks/kavach-ios && pod trunk push KavachSDK.podspec && cd ../..
+```
+
+**Android (Maven Central)**
+```bash
+cd sdks/kavach-android && ./gradlew publish && cd ../..
+```
 
 
 ## 🌐 The Kavach Ecosystem
