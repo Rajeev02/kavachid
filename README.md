@@ -277,12 +277,37 @@ This opens a GUI at `http://localhost:5555` where you can view, edit, or delete 
 
 ---
 
+## 🎯 The Gaps (What we need to build for Commercial Parity)
+
+While KavachID's core DPoP and cryptographic engine are technically superior to many commercial offerings, enterprise IAMs offer extensive peripheral ecosystems. To achieve 1:1 commercial parity, we need:
+
+* **Enterprise Federation (B2B)**: SAML 2.0 or generic OIDC connectors for "Login with Microsoft Entra/Google Workspace".
+* **Intelligent Threat Protection**: Rate limiters, brute-force lockouts, and adaptive anomaly detection (e.g., impossible travel).
+* **User Directory Syncing**: SCIM 2.0 implementation for automated HR provisioning.
+* **Native Mobile SDKs**: Published packages for Swift (iOS), Kotlin (Android), and React Native (TurboModules) wrapping our DPoP logic.
+
+> **For a detailed breakdown of how KavachID compares to Auth0, Okta, and Keycloak, refer to the [IAM Parity Analysis](project_docs/iam_parity_analysis.md).**
+
+---
+
+## 🔮 The Future Roadmap (Becoming the most advanced)
+
+To crush the competition and move beyond parity, our roadmap focuses on Zero Trust principles:
+
+1. **Continuous Authentication**: Continuously evaluate device risk scores on every request, revoking DPoP keys instantly if malware is detected.
+2. **AI-Driven Anomaly Detection**: Train lightweight ML models on audit logs to detect anomalous access patterns.
+3. **Hardware-Enforced DPoP**: On mobile (Swift/Kotlin/React Native), generate DPoP private keys entirely inside the iOS Secure Enclave / Android StrongBox, ensuring keys are non-extractable even on rooted devices.
+
+---
+
 ## 🗺️ Recent Project Phases & Libraries
 
 * **Phase 11: Integration Libraries**: We've published standard wrappers for popular frameworks:
   * `@kavachid/react`: React context and `useKavach` hooks.
   * `@kavachid/react-native`: Secure storage adapters for mobile platforms.
 * **Phase 12 & 13: Lightweight Example Suite & Load Testing**: We introduced the **Kavach Store Suite** under `examples/` (`kavach-store`, `kavach-customer`, `kavach-vendor`, `kavach-analytics`, `kavach-admin`), serving as no-build vanilla JS references. We also benchmarked the backend (`autocannon` load-tester), proving high-throughput concurrent DPoP and Argon2 hashing.
+* **Phase 19: The Passkey Revolution**: Implemented FIDO2 WebAuthn, allowing users to authenticate via FaceID, TouchID, or YubiKeys natively.
+* **Phase 20: Cross-Product Tracking & SSO Consent**: Implemented robust tracking of device and session usage across different applications within the ecosystem, including dynamic SSO consent UIs.
 
 ---
 

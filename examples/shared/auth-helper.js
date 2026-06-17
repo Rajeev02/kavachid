@@ -7,6 +7,7 @@ export class KavachAuthHelper {
   constructor(config = {}) {
     this.serverUrl = config.serverUrl || 'http://localhost:3000';
     this.tenantId = config.tenantId || '123e4567-e89b-12d3-a456-426614174000';
+    this.clientId = config.clientId;
     this.appName = config.appName || 'KavachID App';
     this.ssoMode = config.ssoMode || 'silent';
     this.onAuthSuccess = config.onAuthSuccess || (() => {});
@@ -14,6 +15,7 @@ export class KavachAuthHelper {
     this.client = new KavachClient({
       serverUrl: this.serverUrl,
       tenantId: this.tenantId,
+      clientId: this.clientId,
       ssoMode: this.ssoMode
     });
 
@@ -61,6 +63,8 @@ export class KavachAuthHelper {
             </div>
             
             <button type="submit" class="btn btn-full" id="auth-submit-btn">Sign In</button>
+            <div style="margin: 1rem 0; text-align: center; color: var(--text-muted);">— OR —</div>
+            <button type="button" class="btn btn-full btn-secondary" id="auth-passkey-btn">🔐 Sign In with Passkey</button>
           </form>
           
           <div class="toggle-auth">
@@ -146,6 +150,25 @@ export class KavachAuthHelper {
         }
       });
     }
+
+    const passkeyBtn = document.getElementById('auth-passkey-btn');
+    if (passkeyBtn) {
+      passkeyBtn.addEventListener('click', async () => {
+        const identifier = document.getElementById('auth-email').value || prompt('Enter your email or username to login with Passkey:');
+        if (!identifier) return;
+
+        passkeyBtn.disabled = true;
+        this.showError(null);
+        try {
+          await this.client.loginWithPasskey(identifier);
+          await this.checkAuthStatus();
+        } catch (err) {
+          this.showError(err.message || 'Passkey login failed');
+        } finally {
+          passkeyBtn.disabled = false;
+        }
+      });
+    }
   }
 
   showError(message) {
@@ -162,12 +185,12 @@ export class KavachAuthHelper {
     const token = await this.client.getAccessToken();
     if (token) {
       if (this.client.ssoMode === 'prompt') {
-        let consentedApps = [];
-        try {
-          consentedApps = JSON.parse(localStorage.getItem('kavach_consented_apps') || '[]');
-        } catch(e){}
-
-        if (!consentedApps.includes(this.appName)) {
+        // Fetch active sessions to see if this app is already accessed
+        const sessionsData = await this.client.getSessions().catch(() => ({ sessions: [] }));
+        const currentSession = sessionsData.sessions[0];
+        const isAccessed = currentSession && currentSession.appAccesses && currentSession.appAccesses.some(a => a.appClient.name === this.appName);
+        
+        if (currentSession && !isAccessed && currentSession.loginClient?.name !== this.appName) {
           const profileData = await this.client.getProfile().catch(() => ({ user: {} }));
           this.showSsoPrompt(profileData.user);
           return;
@@ -210,16 +233,9 @@ export class KavachAuthHelper {
       </div>
     `;
 
-    document.getElementById('sso-continue-btn').addEventListener('click', () => {
-      let consentedApps = [];
-      try {
-        consentedApps = JSON.parse(localStorage.getItem('kavach_consented_apps') || '[]');
-      } catch(e){}
-      if (!consentedApps.includes(this.appName)) {
-        consentedApps.push(this.appName);
-        localStorage.setItem('kavach_consented_apps', JSON.stringify(consentedApps));
-      }
+    document.getElementById('sso-continue-btn').addEventListener('click', async () => {
       ssoView.style.display = 'none';
+      await this.client.recordSsoConsent();
       this.showDashboard();
       this.onAuthSuccess(this.client);
     });
@@ -271,6 +287,9 @@ export class KavachAuthHelper {
           <p><strong>Email:</strong> ${user.email || 'N/A'}</p>
           <p><strong>Username:</strong> ${user.username || 'N/A'}</p>
           <p><strong>User ID:</strong> <span class="mono">${user.id || 'N/A'}</span></p>
+          <div style="margin-top: 1rem;">
+            <button id="register-passkey-btn" class="btn btn-secondary btn-small">➕ Register New Passkey (FaceID/TouchID)</button>
+          </div>
         </div>
 
         <div class="security-grid">
@@ -293,6 +312,8 @@ export class KavachAuthHelper {
                 <li>
                   <strong>IP:</strong> ${s.ipAddress}
                   <br><strong>Agent:</strong> ${s.userAgent || 'Unknown'}
+                  <br><strong>Origin Product:</strong> ${s.loginClient?.name || 'Unknown'}
+                  <br><strong>Products Accessed:</strong> ${s.appAccesses && s.appAccesses.length > 0 ? s.appAccesses.map(a => `<span class="badge" style="background: rgba(16, 185, 129, 0.1); color: var(--success-color); border: 1px solid rgba(16, 185, 129, 0.3); margin-right: 4px; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem;">${a.appClient.name}</span>`).join('') : 'None additional'}
                   <br>Seen: ${new Date(s.lastSeenAt).toLocaleString()}
                   <br><button class="btn btn-small btn-danger" onclick="window.kavachAuth.revokeSession('${s.id}')">Revoke Session</button>
                 </li>
@@ -312,6 +333,15 @@ export class KavachAuthHelper {
         if (confirm('Are you sure you want to log out of ALL devices and sessions?')) {
           await this.client.logoutAll();
           window.location.reload();
+        }
+      });
+
+      document.getElementById('register-passkey-btn')?.addEventListener('click', async () => {
+        try {
+          await this.client.registerPasskey();
+          alert('Passkey successfully registered! You can now log in without a password.');
+        } catch (err) {
+          alert('Failed to register passkey: ' + err.message);
         }
       });
 

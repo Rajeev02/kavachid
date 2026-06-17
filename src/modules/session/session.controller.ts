@@ -1,7 +1,7 @@
 import { Controller, Post, Get, Delete, Param, Body, Req, Query, UseGuards, ValidationPipe, UsePipes, Headers, UnauthorizedException } from '@nestjs/common';
 import type { Request } from 'express';
 import { SessionService } from './session.service';
-import { LoginDto, RefreshDto } from './dto/session.dto';
+import { LoginDto, RefreshDto, SsoConsentDto } from './dto/session.dto';
 import { TenantGuard } from '../tenant/tenant.guard';
 import { CryptoService } from '../crypto/crypto.service';
 import { KeyPairService } from '../keypair/keypair.service';
@@ -40,7 +40,8 @@ export class SessionController {
       dto.fingerprint,
       dpopHeader,
       dpopMethod,
-      dpopUrl
+      dpopUrl,
+      dto.clientId
     );
   }
 
@@ -64,7 +65,8 @@ export class SessionController {
       userAgent,
       dpopHeader,
       dpopMethod,
-      dpopUrl
+      dpopUrl,
+      dto.clientId
     );
   }
 
@@ -72,6 +74,26 @@ export class SessionController {
   @Audit({ action: 'auth.logout', resourceType: 'session' })
   async logout(@Body() dto: RefreshDto) {
     return this.sessionService.revoke(dto.refreshToken);
+  }
+
+  @Post('sso-consent')
+  @Audit({ action: 'auth.sso_consent', resourceType: 'session' })
+  async ssoConsent(
+    @Req() req: Request,
+    @Body() dto: SsoConsentDto
+  ) {
+    // Determine userId from bearer token (AuthGuard could do this but we don't have it on this route yet)
+    // Actually, we'll extract it manually or just verify the session ID matches the user
+    // Wait, the easiest way is to let sessionService verify the session existence 
+    // BUT we need the user ID. We can extract the session ID from refreshToken:
+    const parts = dto.refreshToken.split(':');
+    if (parts.length !== 2) throw new UnauthorizedException('Invalid token format');
+    const sessionId = parts[0];
+    
+    // We can just rely on the token for userId
+    const userId = await this.resolveUserId(req);
+    
+    return this.sessionService.recordSsoConsent(userId, sessionId, dto.clientId);
   }
 
   @Get('sessions')

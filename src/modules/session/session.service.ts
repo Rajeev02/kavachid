@@ -27,7 +27,8 @@ export class SessionService {
     fingerprint?: string,
     dpopHeader?: string,
     dpopMethod?: string,
-    dpopUrl?: string
+    dpopUrl?: string,
+    clientId?: string
   ): Promise<{ accessToken: string; refreshToken: string; expiresIn: string }> {
     const tenantId = this.tenantContext.getRequiredTenantId();
 
@@ -64,6 +65,23 @@ export class SessionService {
     }
 
     const userId = authResult.id;
+
+    return this.issueTokensAndSession(userId, authResult.email, authResult.username, ipAddress, userAgent, fingerprint, dpopHeader, dpopMethod, dpopUrl, clientId);
+  }
+
+  async issueTokensAndSession(
+    userId: string,
+    email: string | null,
+    username: string | null,
+    ipAddress: string,
+    userAgent: string,
+    fingerprint?: string,
+    dpopHeader?: string,
+    dpopMethod?: string,
+    dpopUrl?: string,
+    clientId?: string
+  ): Promise<{ accessToken: string; refreshToken: string; expiresIn: string }> {
+    const tenantId = this.tenantContext.getRequiredTenantId();
 
     // 2. Validate DPoP if present
     let jkt: string | undefined;
@@ -119,10 +137,33 @@ export class SessionService {
         ipAddress,
         userAgent,
         riskScore: 0.0,
+        loginClientId: clientId || null,
       },
     });
 
     const sessionId = session.id;
+
+    if (clientId) {
+      await this.prisma.sessionAppAccess.create({
+        data: {
+          tenantId,
+          sessionId,
+          appClientId: clientId,
+        }
+      });
+      
+      await this.prisma.auditLog.create({
+        data: {
+          tenantId,
+          actorId: userId,
+          action: 'SSO_PRODUCT_ACCESS',
+          resourceType: 'app_client',
+          resourceId: clientId,
+          metadata: { sessionId },
+        }
+      });
+    }
+
     const refreshToken = `${sessionId}:${tokenValue}`;
 
     // 6. Generate DPoP-bound Access Token
@@ -130,8 +171,8 @@ export class SessionService {
     const payload: any = {
       sub: userId,
       tenantId,
-      email: authResult.email,
-      username: authResult.username,
+      email: email,
+      username: username,
       typ: 'at+jwt',
     };
 
@@ -162,6 +203,10 @@ export class SessionService {
     };
   }
 
+  async createSessionForUser(user: any, dpopHeader?: string, ipAddress: string = '0.0.0.0', userAgent: string = 'Unknown', clientId?: string) {
+    return this.issueTokensAndSession(user.id, user.email, user.username, ipAddress, userAgent, undefined, dpopHeader, 'POST', 'http://localhost:3000/auth/webauthn/login-verify', clientId);
+  }
+
   /**
    * Rotate the session refresh token and issue a new access token (implementing RTR)
    */
@@ -171,7 +216,8 @@ export class SessionService {
     userAgent: string,
     dpopHeader?: string,
     dpopMethod?: string,
-    dpopUrl?: string
+    dpopUrl?: string,
+    clientId?: string
   ): Promise<{ accessToken: string; refreshToken: string; expiresIn: string }> {
     const tenantId = this.tenantContext.getRequiredTenantId();
 
@@ -249,6 +295,27 @@ export class SessionService {
       },
     });
 
+    if (clientId) {
+      const existingAccess = await this.prisma.sessionAppAccess.findUnique({
+        where: { tenantId_sessionId_appClientId: { tenantId, sessionId, appClientId: clientId } }
+      });
+      if (!existingAccess) {
+        await this.prisma.sessionAppAccess.create({
+          data: { tenantId, sessionId, appClientId: clientId }
+        });
+        await this.prisma.auditLog.create({
+          data: {
+            tenantId,
+            actorId: session.userId,
+            action: 'SSO_PRODUCT_ACCESS',
+            resourceType: 'app_client',
+            resourceId: clientId,
+            metadata: { sessionId },
+          }
+        });
+      }
+    }
+
     const newRefreshToken = `${sessionId}:${newTokenValue}`;
 
     // 5. Generate new DPoP-bound Access Token
@@ -277,6 +344,45 @@ export class SessionService {
       refreshToken: newRefreshToken,
       expiresIn: '900',
     };
+  }
+
+  /**
+   * Record SSO consent to access a new product
+   */
+  async recordSsoConsent(userId: string, sessionId: string, clientId: string) {
+    const tenantId = this.tenantContext.getRequiredTenantId();
+    
+    // Verify session belongs to user
+    const session = await this.prisma.session.findUnique({
+      where: { tenantId_id: { tenantId, id: sessionId } }
+    });
+
+    if (!session || session.userId !== userId || session.revokedAt) {
+      throw new UnauthorizedException('Invalid or expired session');
+    }
+
+    const existingAccess = await this.prisma.sessionAppAccess.findUnique({
+      where: { tenantId_sessionId_appClientId: { tenantId, sessionId, appClientId: clientId } }
+    });
+
+    if (!existingAccess) {
+      await this.prisma.sessionAppAccess.create({
+        data: { tenantId, sessionId, appClientId: clientId }
+      });
+
+      await this.prisma.auditLog.create({
+        data: {
+          tenantId,
+          actorId: userId,
+          action: 'SSO_PRODUCT_ACCESS',
+          resourceType: 'app_client',
+          resourceId: clientId,
+          metadata: { sessionId },
+        }
+      });
+    }
+
+    return { success: true };
   }
 
   /**
@@ -316,6 +422,16 @@ export class SessionService {
         userAgent: true,
         createdAt: true,
         lastSeenAt: true,
+        loginClient: {
+          select: { name: true }
+        },
+        appAccesses: {
+          select: {
+            appClient: {
+              select: { name: true }
+            }
+          }
+        }
       },
       orderBy: { lastSeenAt: 'desc' },
     });

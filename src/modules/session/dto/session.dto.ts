@@ -10,9 +10,25 @@ export class LoginDto {
   @IsString()
   @IsOptional()
   fingerprint?: string; // Optional device fingerprint
+
+  @IsString()
+  @IsOptional()
+  clientId?: string;
 }
 
 export class RefreshDto {
   @IsString()
   refreshToken: string; // format: sessionId:tokenValue
+
+  @IsString()
+  @IsOptional()
+  clientId?: string;
+}
+
+export class SsoConsentDto {
+  @IsString()
+  refreshToken: string;
+
+  @IsString()
+  clientId: string;
 }

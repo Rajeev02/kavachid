@@ -1,6 +1,7 @@
 import { KavachAuthHelper } from '../shared/auth-helper.js';
 
 new KavachAuthHelper({
+  clientId: '72a477bf-9382-478b-817e-cc814fbc8f8e',
   appName: 'Kavach Store',
   ssoMode: 'prompt',
   onAuthSuccess: async (client) => {

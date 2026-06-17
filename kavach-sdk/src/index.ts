@@ -4,6 +4,7 @@ import { DPoPKeyManager } from './dpop.js';
 export interface KavachClientOptions {
   serverUrl: string;
   tenantId: string;
+  clientId?: string;
   ssoMode?: 'silent' | 'prompt';
   storage?: StorageProvider;
 }
@@ -11,6 +12,7 @@ export interface KavachClientOptions {
 export class KavachClient {
   private readonly serverUrl: string;
   private readonly tenantId: string;
+  public readonly clientId?: string;
   public readonly ssoMode: 'silent' | 'prompt';
   private readonly storage: StorageProvider;
   private readonly dpop: DPoPKeyManager;
@@ -20,6 +22,7 @@ export class KavachClient {
       ? options.serverUrl.slice(0, -1)
       : options.serverUrl;
     this.tenantId = options.tenantId;
+    this.clientId = options.clientId;
     this.ssoMode = options.ssoMode || 'silent';
     
     // Choose default storage (localStorage in browsers, Memory fallback elsewhere)
@@ -83,7 +86,7 @@ export class KavachClient {
         'x-tenant-id': this.tenantId,
         'dpop': dpopProof,
       },
-      body: JSON.stringify({ identifier, password, fingerprint }),
+      body: JSON.stringify({ identifier, password, fingerprint, clientId: this.clientId }),
     });
 
     if (!response.ok) {
@@ -97,6 +100,76 @@ export class KavachClient {
     await this.storage.setItem('kavach_access_token', data.accessToken);
     await this.storage.setItem('kavach_refresh_token', data.refreshToken);
     
+    return data;
+  }
+
+  /**
+   * Register a new passkey (WebAuthn)
+   */
+  async registerPasskey(): Promise<void> {
+    const optionsUrl = this.getFullUrl('/auth/webauthn/register-options');
+    const verifyUrl = this.getFullUrl('/auth/webauthn/register-verify');
+
+    const optionsRes = await this.authenticatedFetch('/auth/webauthn/register-options', { method: 'POST' });
+    if (!optionsRes.ok) throw new Error('Failed to get registration options');
+    const options = await optionsRes.json();
+
+    const { startRegistration } = await import('@simplewebauthn/browser');
+    const attResp = await startRegistration(options);
+
+    const verifyRes = await this.authenticatedFetch('/auth/webauthn/register-verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(attResp),
+    });
+
+    if (!verifyRes.ok) throw new Error('Failed to verify passkey registration');
+  }
+
+  /**
+   * Login with Passkey (WebAuthn)
+   */
+  async loginWithPasskey(identifier: string, fingerprint: string = 'sdk-fingerprint'): Promise<any> {
+    const optionsUrl = this.getFullUrl('/auth/webauthn/login-options');
+    const verifyUrl = this.getFullUrl('/auth/webauthn/login-verify');
+
+    const optionsRes = await fetch(optionsUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-tenant-id': this.tenantId,
+      },
+      body: JSON.stringify({ identifier }),
+    });
+    if (!optionsRes.ok) throw new Error('Failed to get login options');
+    const options = await optionsRes.json();
+
+    const { startAuthentication } = await import('@simplewebauthn/browser');
+    const asseResp = await startAuthentication(options);
+
+    await this.dpop.ensureKey();
+    const dpopProof = await this.dpop.createProof('POST', verifyUrl);
+
+    const verifyRes = await fetch(verifyUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-tenant-id': this.tenantId,
+        'dpop': dpopProof,
+      },
+      body: JSON.stringify({ identifier, response: asseResp, fingerprint, clientId: this.clientId }),
+    });
+
+    if (!verifyRes.ok) {
+      const errorData = await verifyRes.json();
+      throw new Error(errorData.message || 'Passkey login failed');
+    }
+
+    const data = await verifyRes.json();
+    
+    await this.storage.setItem('kavach_access_token', data.accessToken);
+    await this.storage.setItem('kavach_refresh_token', data.refreshToken);
+
     return data;
   }
 
@@ -119,7 +192,7 @@ export class KavachClient {
         'x-tenant-id': this.tenantId,
         'dpop': dpopProof,
       },
-      body: JSON.stringify({ refreshToken }),
+      body: JSON.stringify({ refreshToken, clientId: this.clientId }),
     });
 
     if (!response.ok) {
@@ -184,6 +257,27 @@ export class KavachClient {
     const response = await this.authenticatedFetch('/auth/sessions', { method: 'GET' });
     if (!response.ok) throw new Error('Failed to fetch sessions');
     return response.json();
+  }
+
+  /**
+   * Record SSO Consent for Cross-Product Tracking
+   */
+  async recordSsoConsent(): Promise<any> {
+    if (!this.clientId) return; // No specific client ID to track
+    const refreshToken = await this.getRefreshToken();
+    if (!refreshToken) return;
+    
+    try {
+      await this.authenticatedFetch('/auth/sso-consent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refreshToken, clientId: this.clientId }),
+      });
+    } catch (err) {
+      console.warn('Failed to record SSO consent', err);
+    }
   }
 
   /**
