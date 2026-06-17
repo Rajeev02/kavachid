@@ -8,14 +8,14 @@ echo "-----------------------------------"
 echo "📦 Building & Publishing @rajeev02/kavach-web..."
 cd sdks/kavach-web
 npm run build
-npm publish --access public
+npm publish --access public || echo "⚠️ Version already published to NPM, skipping..."
 cd ../..
 
 # Build and Publish @rajeev02/kavach-react-native
 echo "-----------------------------------"
 echo "📦 Building & Publishing @rajeev02/kavach-react-native..."
 cd sdks/kavach-react-native
-npm publish --access public
+npm publish --access public || echo "⚠️ Version already published to NPM, skipping..."
 cd ../..
 
 echo "-----------------------------------"
