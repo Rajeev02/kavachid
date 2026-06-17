@@ -6,7 +6,7 @@ plugins {
     id("com.vanniktech.maven.publish") version "0.28.0"
 }
 
-group = "io.github.rajeev02"
+group = "io.github.rajeev02.kavach"
 version = "1.0.4"
 
 android {
@@ -60,7 +60,6 @@ dependencies {
 mavenPublishing {
     publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
     signAllPublications()
-    coordinates("io.github.rajeev02.kavach", "kavach-sdk", "1.0.3")
 
     pom {
         name.set("Kavach Android SDK")

@@ -47,6 +47,6 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/Rajeev02/kavachid.git"
+    "url": "git+https://github.com/Rajeev02/kavachid.git"
   }
 }

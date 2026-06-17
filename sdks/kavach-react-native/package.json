@@ -1,5 +1,8 @@
 {
   "name": "@rajeev02/kavach-react-native",
+  "repository": {
+    "url": "git+https://github.com/Rajeev02/kavachid.git"
+  },
   "version": "1.0.4",
   "description": "React Native (New Architecture) bindings for Kavach Shield Engine",
   "peerDependencies": {
