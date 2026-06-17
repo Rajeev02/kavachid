@@ -45,7 +45,7 @@ The repository is organized into distinct domains:
 | Directory | Description |
 | :--- | :--- |
 | `src/` | The core backend. Contains Kavach ID (Auth) and the Kavach Shield Engine (KSE). |
-| `kavach-sdk/` | The NPM library (`@rajeev02/kavach-sdk`). Used to integrate Kavach into Node/Frontend apps. |
+| `sdks/` | The multi-platform native libraries (`kavach-web`, `kavach-react-native`, `kavach-ios`, `kavach-android`, `kavach-flutter`, `kavach-python`, `kavach-go`). |
 | `admin-console/` | The React dashboard used to configure KSE risk policies and RBAC. |
 | `samples/` | Implementation examples for various platforms (see below). |
 
