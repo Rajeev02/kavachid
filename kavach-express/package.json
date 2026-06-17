@@ -1,6 +1,6 @@
 {
   "name": "@kavachid/express",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Express middleware for validating KavachID tokens locally using JWKS",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

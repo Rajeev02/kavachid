@@ -1,6 +1,6 @@
 {
   "name": "@kavachid/react",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "React Context and hooks for KavachID",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

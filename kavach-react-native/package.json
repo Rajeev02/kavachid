@@ -1,6 +1,6 @@
 {
   "name": "@kavachid/react-native",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "React Native secure storage adapter for KavachID",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
