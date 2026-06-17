@@ -1,32 +1,64 @@
 <div align="center">
   <h1>🛡️ KavachSDK (Android)</h1>
-  <p><b>Native Kotlin SDK for the Kavach Ecosystem</b></p>
+  <p><b>Native Kotlin SDK for the Kavach Shield Engine</b></p>
 </div>
 
 ---
 
 ## 📖 Overview
-The official Kavach Android SDK. Built with modern Kotlin Coroutines, it interacts directly with Android's `BiometricPrompt` API to provide secure fingerprint and facial recognition.
+The official Kavach Android SDK. Built from the ground up using modern Kotlin Coroutines and Flows, it interacts directly with AndroidX `BiometricPrompt` and the Android Keystore system.
 
-## 🚀 Installation (Gradle)
-Add the following to your `build.gradle.kts`:
+## ✨ Key Features
+*   **StrongBox TEE Backed:** Cryptographic keys are stored in the Trusted Execution Environment (TEE) or StrongBox, providing bank-grade security.
+*   **Unified Biometric API:** Handles the fragmentation of Android hardware natively—whether it's an ultrasonic fingerprint reader, optical scanner, or 3D facial recognition.
+*   **Coroutines Support:** Fully asynchronous, non-blocking API designed for modern Android architecture components.
+*   **Encrypted SharedPreferences:** Token storage is automatically encrypted using AES-256-GCM.
+
+## 🏆 Why Use This Library?
+*   **Fixes Android Fragmentation:** You don't have to worry about the differences between Samsung, Pixel, and Xiaomi biometric APIs. Kavach handles it all.
+*   **Lifecycle Aware:** The SDK respects Android Activity lifecycles, ensuring biometrics aren't triggered when the app is in the background.
+*   **Modern Kotlin:** No legacy Java callbacks. Clean, idiomatic Kotlin code.
+
+## 🚀 Installation (Maven Central)
+Add to your `build.gradle.kts`:
 ```kotlin
-implementation("com.rajeev02.kavach:kavach-sdk:1.0.0")
+implementation("com.rajeev02.kavach:kavach-sdk:1.0.1")
 ```
 
-## 💻 Usage
+## 💻 Detailed Usage
 
+### 1. Setup in Activity/Fragment
 ```kotlin
 import com.kavach.sdk.KavachClient
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 
-val kavach = KavachClient("https://api.yourdomain.com")
+class LoginActivity : AppCompatActivity() {
+    private val kavach = KavachClient("https://api.yourdomain.com")
 
-lifecycleScope.launch {
-    try {
-        val session = kavach.loginWithBiometrics("user@example.com")
-        println("Success!")
-    } catch (e: Exception) {
-        println("Failed: ${e.message}")
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        
+        findViewById<Button>(R.id.loginBtn).setOnClickListener {
+            performBiometricLogin()
+        }
+    }
+
+    private fun performBiometricLogin() {
+        lifecycleScope.launch {
+            try {
+                // Suspends until the user scans their fingerprint
+                val session = kavach.loginWithBiometrics(
+                    activity = this@LoginActivity, 
+                    email = "user@example.com",
+                    title = "Sign In",
+                    subtitle = "Confirm your fingerprint to continue"
+                )
+                // Navigation to home screen
+            } catch (e: KavachAuthException) {
+                // Handle lockout or hardware errors
+            }
+        }
     }
 }
 ```
