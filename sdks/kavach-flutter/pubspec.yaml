@@ -1,6 +1,6 @@
 name: kavach_flutter
 description: The official Kavach Flutter SDK. Provides cross-platform biometric authentication by securely bridging to native iOS FaceID and Android Biometrics.
-version: 1.0.2
+version: 1.0.3
 homepage: https://github.com/Rajeev02/kavachid
 repository: https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-flutter
 

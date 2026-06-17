@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
   spec.name         = "KavachSDK"
-  spec.version      = "1.0.2"
+  spec.version      = "1.0.3"
   spec.summary      = "Kavach Ecosystem Native iOS SDK"
   spec.description  = "Provides native FaceID/TouchID integrations for the Kavach Shield Engine."
   spec.homepage     = "https://github.com/Rajeev02/kavachid"

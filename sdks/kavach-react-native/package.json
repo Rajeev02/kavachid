@@ -1,6 +1,6 @@
 {
   "name": "@rajeev02/kavach-react-native",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "React Native (New Architecture) bindings for Kavach Shield Engine",
   "peerDependencies": {
     "react-native": "*"

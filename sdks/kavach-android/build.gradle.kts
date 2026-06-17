@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.rajeev02.kavach"
-version = "1.0.2"
+version = "1.0.3"
 
 publishing {
     publications {
