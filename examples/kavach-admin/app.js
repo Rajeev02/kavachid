@@ -1,4 +1,4 @@
-import { KavachAuthHelper } from '../../shared/auth-helper.js';
+import { KavachAuthHelper } from '../shared/auth-helper.js';
 
 new KavachAuthHelper({
   appName: 'Kavach Admin',
@@ -23,6 +23,16 @@ new KavachAuthHelper({
     if (refreshBtn) {
       refreshBtn.addEventListener('click', async () => {
         await fetchUsersList(client);
+      });
+    }
+
+    // 3. Initialize Log Stream
+    startLogStream(client);
+    
+    const refreshLogsBtn = document.getElementById('refresh-logs-btn');
+    if (refreshLogsBtn) {
+      refreshLogsBtn.addEventListener('click', () => {
+        startLogStream(client);
       });
     }
   }
@@ -98,4 +108,33 @@ function renderSessions(sessions) {
       <div style="font-size: 0.75rem; font-family: monospace; color: var(--accent-color);">${session.id.substring(0, 8)}...</div>
     </div>
   `).join('');
+}
+
+function startLogStream(client) {
+  const container = document.getElementById('logs-container');
+  container.innerHTML = '<div style="color: var(--success-color);">[SYS] Connecting to Audit Log Stream... OK.</div>';
+  
+  const events = [
+    "[AUTH] User session created for tenant 'kavach-store'",
+    "[DPoP] Signature verified for request /api/v1/store/orders",
+    "[RBAC] Permission 'orders:read' granted",
+    "[AUDIT] Admin user triggered manual rotation of JWKS keys",
+    "[WARN] High latency detected on database node 2",
+    "[AUTH] Token refreshed successfully",
+    "[WEBHOOK] Payload delivered to https://api.kavach-analytics.local/ingest",
+    "[SYS] Cache invalidated for user roles"
+  ];
+  
+  let i = 0;
+  clearInterval(window.logInterval);
+  window.logInterval = setInterval(() => {
+    if (i >= events.length) i = 0;
+    const time = new Date().toISOString().substring(11, 19);
+    const div = document.createElement('div');
+    div.style.marginBottom = '0.25rem';
+    div.textContent = `${time} ${events[i]}`;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+    i++;
+  }, 2000);
 }

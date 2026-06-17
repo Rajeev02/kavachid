@@ -4,6 +4,11 @@
   "description": "Unified TypeScript/JavaScript Client SDK for KavachID",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "author": "KavachID Team",
+  "license": "MIT",
   "type": "module",
   "exports": {
     ".": {

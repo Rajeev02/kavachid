@@ -42,8 +42,8 @@ export const KavachProvider = ({
       });
       setClient(kavachClient);
 
-      // Check if access token is in storage
-      kavachClient.getAccessToken().then((token) => {
+      // Check if access token
+      kavachClient.getAccessToken().then((token: string | null) => {
         if (token) {
           // Simple user mock resolver
           setUser({ email: 'authenticated-user' });

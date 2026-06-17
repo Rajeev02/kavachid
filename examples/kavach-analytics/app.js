@@ -1,4 +1,4 @@
-import { KavachAuthHelper } from '../../shared/auth-helper.js';
+import { KavachAuthHelper } from '../shared/auth-helper.js';
 
 new KavachAuthHelper({
   appName: 'Kavach Analytics',
@@ -23,6 +23,16 @@ new KavachAuthHelper({
     if (refreshBtn) {
       refreshBtn.addEventListener('click', () => {
         setupChart();
+      });
+    }
+
+    // 3. Setup Project Log Stream
+    startProjectLogStream();
+
+    const refreshLogsBtn = document.getElementById('refresh-project-logs-btn');
+    if (refreshLogsBtn) {
+      refreshLogsBtn.addEventListener('click', () => {
+        startProjectLogStream();
       });
     }
   }
@@ -103,4 +113,52 @@ function renderSessions(sessions) {
       <div style="font-size: 0.75rem; font-family: monospace; color: var(--accent-color);">${session.id.substring(0, 8)}...</div>
     </div>
   `).join('');
+}
+
+function startProjectLogStream() {
+  const tbody = document.getElementById('project-logs-table')?.querySelector('tbody');
+  if (!tbody) return;
+  
+  tbody.innerHTML = '';
+  const events = [
+    { type: 'kavach-store.checkout', identity: 'customer@gmail.com', platform: 'Web', status: 'Success' },
+    { type: 'kavach-store.cart_add', identity: 'user_1234', platform: 'Mobile App', status: 'Success' },
+    { type: 'kavach-vendor.inventory_update', identity: 'vendor_admin', platform: 'Vendor Portal', status: 'Success' },
+    { type: 'kavach-store.payment_failed', identity: 'buyer_99', platform: 'Web', status: 'Failed' },
+    { type: 'kavach-analytics.report_gen', identity: 'analyst_01', platform: 'Internal Tools', status: 'Success' }
+  ];
+
+  let i = 0;
+  clearInterval(window.projectLogInterval);
+  window.projectLogInterval = setInterval(() => {
+    if (i >= events.length) i = 0;
+    const evt = events[i];
+    const row = document.createElement('tr');
+    
+    let statusBadge = '<span class="badge" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); color: var(--success-color);">Success</span>';
+    if (evt.status === 'Failed') {
+      statusBadge = '<span class="badge" style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); color: var(--danger-color);">Failed</span>';
+    }
+
+    row.innerHTML = `
+      <td><strong>${evt.type}</strong></td>
+      <td>${evt.identity}</td>
+      <td>${evt.platform}</td>
+      <td>${statusBadge}</td>
+    `;
+    
+    // Insert at top
+    if (tbody.firstChild) {
+      tbody.insertBefore(row, tbody.firstChild);
+    } else {
+      tbody.appendChild(row);
+    }
+
+    // Keep only last 5
+    if (tbody.children.length > 5) {
+      tbody.removeChild(tbody.lastChild);
+    }
+    
+    i++;
+  }, 2500);
 }

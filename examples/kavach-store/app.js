@@ -1,7 +1,7 @@
-import { KavachAuthHelper } from '../../shared/auth-helper.js';
+import { KavachAuthHelper } from '../shared/auth-helper.js';
 
 new KavachAuthHelper({
-  appName: 'Kavach Finance',
+  appName: 'Kavach Store',
   onAuthSuccess: async (client) => {
     // 1. Fetch active sessions using the SDK
     try {
@@ -16,34 +16,33 @@ new KavachAuthHelper({
       document.getElementById('sessions-list').innerHTML = `<p style="color: var(--danger-color);">${err.message}</p>`;
     }
 
-    // 2. Setup buy stock handlers
-    const tableBody = document.querySelector('#stocks-table tbody');
+    // 2. Setup refund event handlers
+    const tableBody = document.querySelector('#orders-table tbody');
     if (tableBody) {
       tableBody.addEventListener('click', async (e) => {
         const target = e.target;
-        if (target.classList.contains('btn-buy')) {
-          const ticker = target.getAttribute('data-ticker');
-          const price = target.getAttribute('data-price');
+        if (target.classList.contains('btn-refund')) {
+          const order = target.getAttribute('data-order');
+          const amount = target.getAttribute('data-amount');
           
           target.disabled = true;
-          target.textContent = 'Buying...';
+          target.textContent = 'Refunding...';
 
-          const statusDiv = document.getElementById('buy-status');
+          const statusDiv = document.getElementById('refund-status');
           statusDiv.style.display = 'block';
-          statusDiv.innerHTML = `<p style="color: var(--text-muted); font-size: 0.85rem;">Authorizing stock acquisition with bound key proof (RFC 9449)...</p>`;
+          statusDiv.innerHTML = `<p style="color: var(--text-muted); font-size: 0.85rem;">Validating merchant permissions and signing refund payload...</p>`;
 
           // Simulate API dispatching
           setTimeout(() => {
             statusDiv.innerHTML = `
-              <h4 class="success-text" style="font-weight: 600; margin-bottom: 0.5rem; font-size: 0.95rem;">✔ Order Placed</h4>
-              <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.25rem;">Security: <strong>${ticker}</strong></p>
-              <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.25rem;">Price per unit: <strong>$${price}</strong></p>
-              <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.25rem;">Execution status: <strong class="success-text">FILLED</strong></p>
-              <p style="font-size: 0.75rem; color: var(--success-color); margin-top: 0.5rem; font-family: monospace; font-weight: 600;">DPoP-signed outbox log recorded on audit trail</p>
+              <h4 class="success-text" style="font-weight: 600; margin-bottom: 0.5rem; font-size: 0.95rem;">✔ Refund Processed</h4>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.25rem;">Order: <strong>#ORD-${order}</strong></p>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.25rem;">Amount Refunded: <strong class="success-text">$${amount}</strong></p>
+              <p style="font-size: 0.75rem; color: var(--success-color); margin-top: 0.5rem; font-family: monospace; font-weight: 600;">DPoP Audit event dispatched: role permission matched</p>
             `;
             target.disabled = false;
-            target.textContent = 'Purchase';
-          }, 1000);
+            target.textContent = 'Refund';
+          }, 1100);
         }
       });
     }

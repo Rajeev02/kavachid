@@ -4,14 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kavach Analytics - Metrics Viewer</title>
-  <link rel="stylesheet" href="../../shared/styles.css">
+  <link rel="stylesheet" href="../shared/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <header>
     <h1>🛡️ <span class="app-name">Kavach Analytics</span></h1>
     <div class="nav-links">
-      <span class="badge">Business</span>
+      <span class="badge" style="background: var(--primary-color);">Project Log Portal</span>
       <button class="btn btn-secondary" id="logout-btn" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Log Out</button>
     </div>
   </header>
@@ -53,9 +53,10 @@
         <!-- Main Panel -->
         <div class="card">
           <div class="card-header">
-            <h3>Recent Authentication Events Log</h3>
+            <h3>Project-Specific Log Portal</h3>
+            <button class="btn" id="refresh-project-logs-btn" style="padding: 0.25rem 0.75rem; font-size: 0.75rem;">Refresh Logs</button>
           </div>
-          <table>
+          <table id="project-logs-table">
             <thead>
               <tr>
                 <th>Event Type</th>

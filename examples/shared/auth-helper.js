@@ -1,4 +1,4 @@
-import { KavachClient } from '../../kavach-sdk/dist/index.js';
+import { KavachClient } from './lib/kavach-sdk/dist/index.js';
 
 /**
  * Shared authentication wrapper logic for KavachID demo apps.

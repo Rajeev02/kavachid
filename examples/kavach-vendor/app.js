@@ -1,4 +1,4 @@
-import { KavachAuthHelper } from '../../shared/auth-helper.js';
+import { KavachAuthHelper } from '../shared/auth-helper.js';
 
 new KavachAuthHelper({
   appName: 'Kavach Vendor',

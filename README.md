@@ -233,13 +233,13 @@ const client = new KavachClient({
 
 ---
 
-## 🗺️ Remaining Project Phases
+## 🗺️ Recent Project Phases & Libraries
 
-Based on the core vision of KavachID, the remaining implementation milestones are:
-
-* **Phase 8: Infrastructure & Kubernetes Operator**: Docker Compose configurations, Helm Charts, and a custom Kubernetes Operator for zero-downtime, self-hosted clusters.
-* **Phase 9: OIDC Conformance & Compliance**: Validating compliant endpoints against OIDC core standards and FAPI 2.0 security profiles.
-* **Phase 10: Documentation & Community Portal**: Comprehensive developer guide, RFC feedback process, and SDK extensions for Flutter, Go, and Python.
+* **Phase 11: Integration Libraries**: We've published standard wrappers for popular frameworks:
+  * `@kavachid/react`: React context and `useKavach` hooks.
+  * `@kavachid/react-native`: Secure storage adapters for mobile platforms.
+  * `@kavachid/express`: Fast local DPoP & JWKS validation middleware.
+* **Phase 12 & 13: Lightweight Example Suite & Load Testing**: We introduced the **Kavach Store Suite** under `examples/` (`kavach-store`, `kavach-customer`, `kavach-vendor`, `kavach-analytics`, `kavach-admin`), serving as no-build vanilla JS references. We also benchmarked the backend (`autocannon` load-tester), proving high-throughput concurrent DPoP and Argon2 hashing.
 
 ---
 

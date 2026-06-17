@@ -4,6 +4,14 @@
   "description": "Express middleware for validating KavachID tokens locally using JWKS",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "author": "KavachID Team",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc"
+  },
   "peerDependencies": {
     "express": "^4.0.0 || ^5.0.0"
   },
