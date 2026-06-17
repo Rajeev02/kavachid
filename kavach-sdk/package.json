@@ -1,5 +1,5 @@
 {
-  "name": "@kavach/sdk",
+  "name": "@rajeev02/kavach-sdk",
   "version": "1.0.0",
   "description": "Unified SDK for Kavach ID and Kavach Shield Engine integration",
   "main": "dist/index.js",

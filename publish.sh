@@ -3,9 +3,9 @@ set -e
 
 echo "🚀 Starting Kavach Ecosystem NPM Publishing..."
 
-# Build and Publish @kavach/sdk
+# Build and Publish @rajeev02/kavach-sdk
 echo "-----------------------------------"
-echo "📦 Building & Publishing @kavach/sdk (Includes Kavach Shield Engine bindings)..."
+echo "📦 Building & Publishing @rajeev02/kavach-sdk (Includes Kavach Shield Engine bindings)..."
 cd kavach-sdk
 npm run build
 npm publish --access public
