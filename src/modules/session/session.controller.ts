@@ -1,4 +1,5 @@
 import { Controller, Post, Get, Delete, Param, Body, Req, Query, UseGuards, ValidationPipe, UsePipes, Headers, UnauthorizedException } from '@nestjs/common';
+import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import { SessionService } from './session.service';
 import { LoginDto, RefreshDto, SsoConsentDto } from './dto/session.dto';
@@ -18,6 +19,8 @@ export class SessionController {
   ) {}
 
   @Post('login')
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Audit({ action: 'auth.login', resourceType: 'session' })
   async login(
     @Req() req: Request,

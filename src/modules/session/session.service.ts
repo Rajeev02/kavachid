@@ -33,7 +33,6 @@ export class SessionService {
     const tenantId = this.tenantContext.getRequiredTenantId();
 
     // 1. Verify User Credentials
-    // This throws NotFoundException or UnauthorizedException on failure
     const authResult = await this.prisma.user.findFirst({
       where: {
         tenantId,
@@ -42,7 +41,13 @@ export class SessionService {
     });
 
     if (!authResult) {
+      await this.logAttempt(tenantId, ipAddress, identifier, false);
       throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (authResult.status === 'LOCKED') {
+      await this.logAttempt(tenantId, ipAddress, identifier, false);
+      throw new UnauthorizedException('Account is locked due to multiple failed login attempts.');
     }
 
     // Double-check verification via central UserService flow
@@ -52,17 +57,23 @@ export class SessionService {
       // If legacy, we can delegate or simulate here. To be consistent, let's throw or handle.
       // But standard user verification is simple:
       if (password !== 'legacyPass123' && !password.endsWith('_legacy')) {
+        await this.logAttempt(tenantId, ipAddress, identifier, false);
         throw new UnauthorizedException('Invalid credentials');
       }
     } else {
       if (!authResult.passwordHash) {
+        await this.logAttempt(tenantId, ipAddress, identifier, false);
         throw new UnauthorizedException('User does not have a password set');
       }
       const isMatch = await this.crypto.verifyPassword(password, authResult.passwordHash);
       if (!isMatch) {
+        await this.logAttempt(tenantId, ipAddress, identifier, false);
         throw new UnauthorizedException('Invalid credentials');
       }
     }
+
+    // Success
+    await this.logAttempt(tenantId, ipAddress, identifier, true);
 
     const userId = authResult.id;
 
@@ -498,5 +509,20 @@ export class SessionService {
       },
     });
     await this.outbox.createEvent(tenantId, 'AllSessionsRevoked', { userId });
+  }
+
+  private async logAttempt(tenantId: string, ipAddress: string, identifier: string, success: boolean) {
+    try {
+      await this.prisma.loginAttempt.create({
+        data: {
+          tenantId,
+          ipAddress,
+          identifier,
+          success,
+        },
+      });
+    } catch (e) {
+      // Ignore errors for login attempt logging
+    }
   }
 }

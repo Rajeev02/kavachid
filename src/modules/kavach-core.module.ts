@@ -12,6 +12,12 @@ import { AuthModule } from './auth/auth.module';
 import { RoleModule } from './role/role.module';
 import { AuditLogModule } from './audit-log/audit-log.module';
 import { AdminModule } from './admin/admin.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { PrismaThrottlerStorage } from './database/prisma-throttler.storage';
+import { PrismaService } from './database/prisma.service';
+import { ThreatDetectionModule } from './threat-detection/threat-detection.module';
+import { FederationModule } from './federation/federation.module';
 
 @Module({})
 export class KavachCoreModule {
@@ -36,6 +42,17 @@ export class KavachCoreModule {
         RoleModule,
         AuditLogModule,
         AdminModule,
+        ThreatDetectionModule,
+        FederationModule,
+        ScheduleModule.forRoot(),
+        ThrottlerModule.forRootAsync({
+          imports: [DatabaseModule],
+          inject: [PrismaService],
+          useFactory: (prisma: PrismaService) => ({
+            throttlers: [{ ttl: 60000, limit: 5 }],
+            storage: new PrismaThrottlerStorage(prisma),
+          }),
+        }),
       ],
       providers: [optionsProvider],
       exports: [
@@ -51,6 +68,9 @@ export class KavachCoreModule {
         RoleModule,
         AuditLogModule,
         AdminModule,
+        ThreatDetectionModule,
+        FederationModule,
+        ThrottlerModule,
       ],
     };
   }

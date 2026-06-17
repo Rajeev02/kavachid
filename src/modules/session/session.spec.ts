@@ -12,6 +12,7 @@ import { UserService } from '../user/user.service';
 import { TenantContext } from '../tenant/tenant.context';
 import { PrismaService } from '../database/prisma.service';
 import { UnauthorizedException } from '@nestjs/common';
+import { ThrottlerModule } from '@nestjs/throttler';
 import * as jose from 'jose';
 import { createHash } from 'crypto';
 
@@ -33,6 +34,7 @@ describe('SessionService (Integration Tests)', () => {
         OutboxModule,
         KeyPairModule,
         UserModule,
+        ThrottlerModule.forRoot([{ ttl: 60000, limit: 5 }]),
         SessionModule,
       ],
     }).compile();

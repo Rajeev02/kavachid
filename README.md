@@ -1,47 +1,20 @@
 # KavachID 🛡️
 
-**KavachID** is a next-generation, 100% open-source Identity & Access Management (IAM) operating system and trust infrastructure. Built with NestJS, Prisma 7, and PostgreSQL, it is designed from the ground up to provide state-of-the-art security, multi-tenant isolation, Zero Trust device binding, and high-performance token authorization.
+**KavachID** is a next-generation, 100% open-source Identity & Access Management (IAM) operating system and trust infrastructure. Built with NestJS, Prisma 7, and PostgreSQL, it is designed from the ground up to provide state-of-the-art security, multi-tenant isolation, Zero Trust device binding (DPoP), and high-performance token authorization.
 
 ---
 
-## 🚀 Key Features Implemented (Phases 1-6)
+## 🚀 Key Features
 
-### 1. Multi-Tenant Isolated User Management
-* **Tenant Isolation**: Secure context isolation using custom headers (`x-tenant-id`) and isolated schemas.
-* **Modern Cryptography**: Argon2id password hashing executed asynchronously via a worker-thread pool protecting the main Node.js event loop.
-* **Just-in-Time (JIT) Legacy Migration**: Lazy migration workflows allowing seamless legacy system upgrades via secure webhook-based verification.
-
-### 2. High-Security Token Session Lifecycle
-* **DPoP (RFC 9449)**: Demonstating Proof-of-Possession binding at the protocol level. Access tokens are bound to client-specific cryptographic key thumbprints (`cnf.jkt`) to prevent token theft and replay attacks.
-* **Refresh Token Rotation (RTR)**: Cryptographically rotates refresh tokens on every usage, invalidating the previous version.
-* **Hijack/Replay Detection**: Instant detection of refresh token reuse trigger invalidation of all active sessions for the compromised user.
-* **Active Session Management**: Discover active sessions and revoke tokens on-demand.
-
-### 3. Key Rotation & Public JWKS
-* **Private Key Security**: RSA private keys are encrypted at rest using symmetric AES-256-GCM.
-* **Automatic Key Rotation**: Key rotation cycle generating new keys and updating status flags dynamically.
-* **JWKS Endpoints**: Exposes OpenID-compliant JSON Web Key Sets (`/oauth/jwks` and `/.well-known/jwks.json`) for public verification.
-
-### 4. Tenant-Isolated Authorization Engine (RBAC)
-* **Dynamic Access Control**: Manage hierarchical Roles, Permissions, Role-Permission mappings, and User-Role assignments.
-* **Global Security Guards**: Global NestJS authentication (`AuthGuard`) and permission guards (`PermissionsGuard`) secure endpoints using decorator metadata.
-
-### 5. Observability, Security Audit Logs & Webhooks
-* **Automated Audit Logs**: A global `AuditLogInterceptor` intercepts requests to annotated route handlers, automatically recording actions, actors, and resource IDs inside database audit tables.
-* **Metadata Sanitization**: Automatically removes sensitive information (passwords, tokens, secrets) before persisting audit metadata.
-* **Transactional Outbox & Webhooks**: Uses the Transactional Outbox Pattern to publish event webhooks to external listeners (`process.env.WEBHOOK_URL`) via Axios.
-* **Exponential Backoff Retries**: Failed webhook notifications automatically retry with exponential backoff ($2^{\text{retryCount}}$ seconds) up to 5 times.
-
----
-
-## 🛠️ Tech Stack & Dependencies
-
-* **Core Framework**: NestJS 11
-* **Database Interface**: Prisma 7 + PostgreSQL 16
-* **Database Driver Adapter**: `@prisma/adapter-pg` + `pg` (required for Prisma 7 compatibility)
-* **Password Hashing**: `argon2` (using multi-threaded worker pools)
-* **JWT / Cryptography**: `jose` (ESM native, fully transformed for Jest)
-* **HTTP Client**: `axios`
+* **Multi-Tenant Context Isolation:** Native HTTP header-based tenant isolation (`x-tenant-id`) backed by tenant schema isolation.
+* **FIDO2 WebAuthn Passkeys (Phase 19):** Built-in support for biometrics (TouchID, FaceID) and hardware security keys (YubiKeys) using `@simplewebauthn`.
+* **Zero Trust Token Security (DPoP - RFC 9449):** Ephemeral client-bound key thumbprints (`cnf.jkt`) prevent token interception, theft, or replay attacks.
+* **Strict Refresh Token Rotation (RTR):** Automatically rotates refresh tokens on every request. Instant reuse/hijack detection auto-invalidates all active sessions for the affected user.
+* **Intelligent Threat Detection (Phase 20):**
+  * **Postgres Rate Limiter:** Custom `PrismaThrottlerStorage` throttles `/auth/login` attempts to prevent brute-force attacks.
+  * **Automated Account Lockout:** Cron-based worker scans for failed login patterns and locks accounts (`status = 'LOCKED'`) when failing attempts exceed dynamic `Tenant.maxFailedLogins` thresholds.
+* **Social & Enterprise Federation (Phase 21):** Exposes OAuth2 login/callback endpoints for Google and Microsoft with automated JIT user provisioning and link tracking.
+* **Cross-Product SSO Consent:** Tracks active session product footprints (`SessionAppAccess`) and presents interactive glassmorphic Account Chooser screens.
 
 ---
 
@@ -53,27 +26,25 @@ src/
 ├── app.module.ts
 ├── main.ts
 └── modules/
-    ├── audit-log/       # Audit Decorator, Service, & Interceptor
-    ├── auth/            # Auth Guard, Permissions Decorator, & Permissions Guard
+    ├── audit-log/       # Audit Interceptor & decorator metadata
+    ├── auth/            # Auth Guards, Roles & Permissions engine
     ├── crypto/          # Argon2 worker threads, AES-256-GCM, & JWT utils
-    ├── database/        # Prisma Client & PostgreSQL driver adapter
+    ├── database/        # Prisma Client & PrismaThrottlerStorage
+    ├── federation/      # OAuth2 Social & Enterprise login handlers
     ├── keypair/         # RSA Key generation, rotation, & JWKS endpoints
     ├── outbox/          # Webhook dispatcher & retry poller
     ├── role/            # Roles & Permissions administration controllers/services
-    ├── session/         # Login, DPoP binding, RTR, reuse check, & logout
+    ├── session/         # DPoP binding, RTR, WebAuthn & login sessions
     ├── tenant/          # Multi-tenant context and guards
+    ├── threat-detection/# Automated login lockout workers
     └── user/            # Registration & credentials verification
 ```
-
-### 📖 API Reference
-
-Detailed HTTP API specifications, including payload models, request/response headers, and status codes for all modules, are documented in the [API Specification](project_docs/api_documentation.md).
 
 ---
 
 ## 🏃 Getting Started
 
-### 1. Project Setup
+### 1. Installation & Setup
 ```bash
 # Clone the repository
 git clone https://github.com/Rajeev02/kavachid.git
@@ -89,51 +60,44 @@ Create a `.env` file in the root directory:
 DATABASE_URL="postgresql://username:password@localhost:5432/kavachid?schema=public"
 KAVACHID_MASTER_KEY="your-32-byte-hex-encoded-master-encryption-key"
 WEBHOOK_URL="http://localhost:3000/webhook"
+GOOGLE_CLIENT_ID="your-google-client-id"
+MS_CLIENT_ID="your-microsoft-client-id"
 ```
 
-### 3. Run Schema Migrations
-Deploy the multi-tenant Prisma schema to your local PostgreSQL instance:
+### 3. Deploy Database Schema
+Push the schemas, custom tables (`RateLimit`, `LoginAttempt`, `UserFederation`, `PasskeyCredential`) to your local PostgreSQL instance:
 ```bash
 npx prisma db push
 ```
 
-### 4. Start the Application
+### 4. Run the Servers
 ```bash
-# Development mode
+# Backend server
 npm run start:dev
 
-# Production mode
-npm run start:prod
-```
-
-### 5. Running Tests
-```bash
-# Unit & integration tests
-npm run test
-
-# End-to-End integration tests
-npm run test:e2e
+# Frontend Examples server (SSO Suite)
+npx serve examples -l 8080
 ```
 
 ---
 
-## 📦 Reusable Backend Library (`KavachCoreModule`)
+## 📦 Backend Integration (`KavachCoreModule`)
 
-KavachID can be imported directly into other NestJS backends as a reusable authentication and authorization dynamic module. This allows you to manage user accounts, sessions, key rotation, and RBAC policies while maintaining complete control over your database.
+`KavachCoreModule` can be integrated directly into any NestJS application to manage tenant contexts, authorization rules, key rotations, and threat detection parameters.
 
-### 1. Import the Core Module
-In your main NestJS application module (e.g., `app.module.ts`), import the module dynamically:
+### 1. Register Module dynamically
+Register the core module inside your parent module (e.g. `app.module.ts`):
 
 ```typescript
 import { Module } from '@nestjs/common';
-import { KavachCoreModule } from 'kavachid';
+import { KavachCoreModule } from './modules/kavach-core.module';
 
 @Module({
   imports: [
     KavachCoreModule.forRoot({
-      databaseUrl: 'postgresql://username:password@localhost:5432/kavachid?schema=public',
-      masterKey: 'your-32-byte-hex-encoded-master-encryption-key',
-      webhookUrl: 'https://your-api.domain.com/webhooks',
+      databaseUrl: process.env.DATABASE_URL,
+      masterKey: process.env.KAVACHID_MASTER_KEY,
+      webhookUrl: process.env.WEBHOOK_URL,
       accessTokenExpiresIn: '15m',
       refreshTokenExpiresIn: '7d',
     }),
@@ -142,175 +106,194 @@ import { KavachCoreModule } from 'kavachid';
 export class AppModule {}
 ```
 
-*Note: If no options are passed, the module defaults to standalone hosting mode, automatically reading configurations from your `.env` variables.*
-
-### 2. Protect Endpoints Using Guards and Decorators
-The backend module exports pre-built NestJS guards and custom decorators for seamless access control:
+### 2. Guard Routes & Enforce Access Control
+Use the custom NestJS guards to enforce multi-tenant isolation, JWT verification, and RBAC permission sets:
 
 ```typescript
-import { Controller, Get, UseGuards } from '@nestjs/common';
-import { AuthGuard, PermissionsGuard, RequirePermissions, Audit } from 'kavachid';
+import { Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { AuthGuard } from './modules/auth/auth.guard';
+import { PermissionsGuard } from './modules/auth/permissions.guard';
+import { TenantGuard } from './modules/tenant/tenant.guard';
+import { RequirePermissions } from './modules/auth/permissions.decorator';
+import { Audit } from './modules/audit-log/audit.decorator';
 
-@Controller('billing')
-@UseGuards(AuthGuard, PermissionsGuard) // Require valid JWT and tenant isolation context
-export class BillingController {
-  
-  @Get('invoices')
-  @RequirePermissions('billing:read') // Enforce Role-Based Access Control
-  @Audit('READ_INVOICES') // Automatically capture audit trail in the outbox
-  async getInvoices() {
-    return { invoices: [] };
+@Controller('reports')
+@UseGuards(TenantGuard, AuthGuard, PermissionsGuard) // Enforces isolation, valid JWT, and RBAC
+export class ReportsController {
+
+  @Get('monthly')
+  @RequirePermissions('reports:view')
+  @Audit({ action: 'reports.view', resourceType: 'report' })
+  async getMonthlyReports() {
+    return { data: 'Sales reports...' };
   }
 }
 ```
 
----
+### 3. Tenant Lockout & Rate Limiting Configuration
+The rate-limiting and lockout constraints are configured per-tenant inside the database. Adjust the limits directly on the `Tenant` record:
 
-## 📱 Unified JS/TS Client SDK (`@kavachid/sdk`)
-
-The `@kavachid/sdk` is a lightweight, cross-platform TypeScript SDK compatible with Web, React, Next.js, React Native, and Node.js environments. It handles OAuth operations, PKCE challenges, DPoP cryptographic proof signing, and silent token refresh rotation.
-
-### 1. Installation
-Install the SDK directly from your project:
-```bash
-npm install ./kavach-sdk
+```typescript
+// Update maximum login attempts before account locks out
+await prisma.tenant.update({
+  where: { id: tenantId },
+  data: { maxFailedLogins: 5 } // Account status goes 'LOCKED' on the 5th failed try
+});
 ```
 
-### 2. Basic Initialization
-Initialize the `KavachClient` with your KavachID endpoint and tenant ID:
+---
 
+## 🌐 Web SDK Integration (`@kavachid/sdk`)
+
+The web client manages browser-native sessionStorage, DPoP keypair generation, and silent refresh rotations automatically.
+
+### 1. Initialize KavachClient
 ```typescript
 import { KavachClient } from '@kavachid/sdk';
 
 const client = new KavachClient({
   serverUrl: 'http://localhost:3000',
-  tenantId: '123e4567-e89b-12d3-a456-426614174000', // Multi-tenant context ID
+  tenantId: 'your-tenant-uuid-here',
+  clientId: 'app-client-uuid-here', // Required for cross-product tracking
+  ssoMode: 'prompt' // Enables the glassmorphic SSO Account Chooser
 });
 ```
 
-### 3. Register & Login
+### 2. Password Credentials Sign-in & Registration
 ```typescript
-// Register a new user account
-await client.register('user@domain.com', 'SecurePassword123!', 'johndoe', { customMetadata: 'value' });
+// Register account
+await client.register('user@example.com', 'SecurePass123!', 'user_name');
 
-// Log in user, generating device-bound DPoP key pairs automatically
-const authData = await client.login('user@domain.com', 'SecurePassword123!');
-console.log('Access Token:', authData.accessToken);
+// Log in (Automatically generates local DPoP keys and signs the authentication request)
+const session = await client.login('user@example.com', 'SecurePass123!');
+console.log('User Access Token:', session.accessToken);
 ```
 
-### 4. Authenticated API Requests with Silent Token Rotation
-Use `authenticatedFetch` as a drop-in replacement for standard `fetch`. It automatically signs requests with ephemeral DPoP headers and handles silent token refresh retries on 401 responses:
+### 3. Passkey (FIDO2 WebAuthn) Authentication
+Trigger local biometric prompts (TouchID / FaceID) natively inside the browser:
+
+```typescript
+// 1. Register a new Passkey credential (must be logged in)
+await client.registerPasskey();
+
+// 2. Log in using Passkeys (completely passwordless)
+const session = await client.loginWithPasskey('user@example.com');
+console.log('LoggedIn via Biometrics:', session.accessToken);
+```
+
+### 4. Authenticated Fetch Requests
+Perform authenticated requests using the fetch wrapper. It injects the tenant ID, Authorization header, and constructs the cryptographic DPoP proof signature automatically. It also refreshes the session silently if the access token has expired:
 
 ```typescript
 const response = await client.authenticatedFetch('/auth/sessions');
-const activeSessions = await response.json();
-```
-
-### 5. Custom Storage Provider (React Native & Mobile Support)
-By default, the SDK uses `localStorage` in the browser and fallback in-memory storage elsewhere. You can pass a custom storage adapter (e.g., using `react-native-keychain` or custom SQLite store) by implementing the `StorageProvider` interface:
-
-```typescript
-import { KavachClient, StorageProvider } from '@kavachid/sdk';
-
-const customSecureStorage: StorageProvider = {
-  async getItem(key: string) {
-    return secureStorage.read(key);
-  },
-  async setItem(key: string, value: string) {
-    await secureStorage.write(key, value);
-  },
-  async removeItem(key: string) {
-    await secureStorage.delete(key);
-  }
-};
-
-const client = new KavachClient({
-  serverUrl: 'http://localhost:3000',
-  tenantId: '123e4567-e89b-12d3-a456-426614174000',
-  storage: customSecureStorage,
-});
+const sessions = await response.json();
 ```
 
 ---
 
-## 🔐 SSO Account Chooser (Cross-Domain Single Sign-On)
+## 📱 Mobile SDK Integrations
 
-KavachID comes with native Single Sign-On (SSO) support that perfectly mimics modern Identity Providers (like Google Workspace). 
+Mobile SDK integrations wrap the core DPoP cryptographic logic using hardware security modules (Secure Enclave / Android Keystore) to ensure that private keys can never be extracted.
 
-By default, the SDK supports an `ssoMode` parameter:
-* `ssoMode: 'silent'` (Default): Automatically silently logs users into any KavachID application if they have an active session.
-* `ssoMode: 'prompt'`: Intercepts the login flow when navigating to a *new* application, displaying an interactive **"Continue as [Username]?"** Account Chooser. This lets users grant explicit consent to specific applications or easily switch accounts without losing their underlying session!
+### 1. iOS Native Integration (`kavach-ios`)
+The Swift SDK saves rotated tokens to iOS Keychain and signs DPoP requests using cryptographic keys created in the Secure Enclave.
+
+```swift
+import Foundation
+import KavachCore
+
+// 1. Initialize Client
+let client = KavachClient(
+    serverUrl: "https://api.kavachid.local",
+    tenantId: "your-tenant-uuid"
+)
+
+// 2. Perform login with DPoP signing
+client.login(email: "user@example.com", password: "Password123!") { result in
+    switch result {
+    case .success(let tokens):
+        print("AccessToken: \(tokens.accessToken)")
+    case .failure(let error):
+        print("Login failed: \(error.localizedDescription)")
+    }
+}
+
+// 3. Make authenticated API call (Signs headers using Secure Enclave)
+client.authenticatedRequest(path: "/auth/me", method: "GET") { response in
+    // Process response
+}
+```
+
+### 2. Android Native Integration (`kavach-android`)
+Android wraps token storage inside `EncryptedSharedPreferences` and uses an `OkHttp` interceptor to sign outgoing HTTP requests with DPoP headers.
+
+```kotlin
+import com.kavachid.sdk.KavachClient
+import okhttp3.OkHttpClient
+
+// 1. Initialize SDK
+val client = KavachClient(
+    context = applicationContext,
+    serverUrl = "https://api.kavachid.local",
+    tenantId = "your-tenant-uuid"
+)
+
+// 2. Authenticate
+client.login("user@example.com", "Password123!", onSuccess = { session ->
+    Log.d("KavachID", "Logged in. Token: ${session.accessToken}")
+}, onFailure = { err ->
+    Log.e("KavachID", "Auth error", err)
+})
+
+// 3. Setup OkHttp client equipped with automatic DPoP signer interceptor
+val okHttpClient = OkHttpClient.Builder()
+    .addInterceptor(client.getDpopInterceptor())
+    .build()
+```
+
+### 3. React Native Bridge (`kavach-react-native`)
+The React Native module is implemented as a TurboModule (New Architecture), invoking native Swift/Kotlin secure key functions directly via synchronous JavaScript JSI bindings.
 
 ```typescript
-const client = new KavachClient({
-  serverUrl: 'http://localhost:3000',
-  tenantId: '123e4567-e89b-12d3-a456-426614174000',
-  ssoMode: 'prompt' // Enables the Account Chooser UI flow
-});
+import NativeKavachModule from 'kavach-react-native';
+
+// Sync DPoP generation via JSI Bridge
+const dpopProof = NativeKavachModule.generateDPoPProofSync(
+  'POST',
+  'https://api.kavachid.local/auth/login'
+);
+
+console.log('Generated Mobile cryptographic proof:', dpopProof);
+```
+
+### 4. Flutter Integration (`kavach-flutter`)
+Dart client integrating with local biometric/secure store packages to manage token lifetimes.
+
+```dart
+import 'package:kavach_flutter/kavach_client.dart';
+
+final client = KavachClient(
+  serverUrl: 'https://api.kavachid.local',
+  tenantId: 'your-tenant-uuid',
+);
+
+// Authenticate and save DPoP-bound tokens
+await client.login('user@example.com', 'Password123!');
 ```
 
 ---
 
-## 🗄️ Data Storage Architecture
+## 🗄️ Database Inspection (Prisma Studio)
 
-KavachID strictly segregates your sensitive data to guarantee Zero Trust security:
+To inspect database audit records, rate limits, login logs, and tenant parameters visually, use the built-in database interface:
 
-### 1. Browser Storage (Frontend)
-The SDK utilizes `localStorage` (or secure native storage in mobile) to hold:
-* **JWT Tokens**: `kavach_access_token` and `kavach_refresh_token`.
-* **DPoP Keys**: `kavach_dpop_key` (A local RSA keypair used to cryptographically sign requests, ensuring token theft is useless).
-* **SSO Consent**: `kavach_consented_apps` (Tracks which apps the user has clicked "Continue as..." on).
-
-### 2. PostgreSQL Storage (Backend)
-The backend securely manages all persistence via **Prisma 7 ORM**:
-* **`User`**: Passwords (hashed via `argon2`), Emails, and Usernames.
-* **`Session` & `Device`**: Tracks IP Addresses, User Agents, and Timestamps for Active Sessions (allowing you to implement "Log out of all devices" instantly).
-* **`AuditLog`**: Stores the system's security trails (e.g. Failed login attempts, permission grants).
-
-### 🔍 Viewing Your Database (Prisma Studio)
-Because KavachID uses Prisma, you get a beautiful visual database browser out of the box!
-To view your Postgres data, run:
 ```bash
 npx prisma studio
 ```
-This opens a GUI at `http://localhost:5555` where you can view, edit, or delete records in your `User`, `Session`, and `AuditLog` tables instantly.
-
----
-
-## 🎯 The Gaps (What we need to build for Commercial Parity)
-
-While KavachID's core DPoP and cryptographic engine are technically superior to many commercial offerings, enterprise IAMs offer extensive peripheral ecosystems. To achieve 1:1 commercial parity, we need:
-
-* **Enterprise Federation (B2B)**: SAML 2.0 or generic OIDC connectors for "Login with Microsoft Entra/Google Workspace".
-* **Intelligent Threat Protection**: Rate limiters, brute-force lockouts, and adaptive anomaly detection (e.g., impossible travel).
-* **User Directory Syncing**: SCIM 2.0 implementation for automated HR provisioning.
-* **Native Mobile SDKs**: Published packages for Swift (iOS), Kotlin (Android), and React Native (TurboModules) wrapping our DPoP logic.
-
-> **For a detailed breakdown of how KavachID compares to Auth0, Okta, and Keycloak, refer to the [IAM Parity Analysis](project_docs/iam_parity_analysis.md).**
-
----
-
-## 🔮 The Future Roadmap (Becoming the most advanced)
-
-To crush the competition and move beyond parity, our roadmap focuses on Zero Trust principles:
-
-1. **Continuous Authentication**: Continuously evaluate device risk scores on every request, revoking DPoP keys instantly if malware is detected.
-2. **AI-Driven Anomaly Detection**: Train lightweight ML models on audit logs to detect anomalous access patterns.
-3. **Hardware-Enforced DPoP**: On mobile (Swift/Kotlin/React Native), generate DPoP private keys entirely inside the iOS Secure Enclave / Android StrongBox, ensuring keys are non-extractable even on rooted devices.
-
----
-
-## 🗺️ Recent Project Phases & Libraries
-
-* **Phase 11: Integration Libraries**: We've published standard wrappers for popular frameworks:
-  * `@kavachid/react`: React context and `useKavach` hooks.
-  * `@kavachid/react-native`: Secure storage adapters for mobile platforms.
-* **Phase 12 & 13: Lightweight Example Suite & Load Testing**: We introduced the **Kavach Store Suite** under `examples/` (`kavach-store`, `kavach-customer`, `kavach-vendor`, `kavach-analytics`, `kavach-admin`), serving as no-build vanilla JS references. We also benchmarked the backend (`autocannon` load-tester), proving high-throughput concurrent DPoP and Argon2 hashing.
-* **Phase 19: The Passkey Revolution**: Implemented FIDO2 WebAuthn, allowing users to authenticate via FaceID, TouchID, or YubiKeys natively.
-* **Phase 20: Cross-Product Tracking & SSO Consent**: Implemented robust tracking of device and session usage across different applications within the ecosystem, including dynamic SSO consent UIs.
+This runs a GUI accessible at `http://localhost:5555` to browse and manage data models in real-time.
 
 ---
 
 ## 📄 License
 
-KavachID is distributed under the **Apache 2.0** License. It is 100% open-source with no feature-locking or hidden commercial dependencies.
+KavachID is distributed under the **Apache 2.0** License. It is 100% open-source with no proprietary feature locks.

@@ -7,5 +7,6 @@ import { WebauthnController } from './webauthn.controller';
 @Module({
   controllers: [SessionController, WebauthnController],
   providers: [SessionService, WebauthnService],
+  exports: [SessionService, WebauthnService],
 })
 export class SessionModule {}
