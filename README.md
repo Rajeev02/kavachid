@@ -65,6 +65,10 @@ src/
     └── user/            # Registration & credentials verification
 ```
 
+### 📖 API Reference
+
+Detailed HTTP API specifications, including payload models, request/response headers, and status codes for all modules, are documented in the [API Specification](project_docs/api_documentation.md).
+
 ---
 
 ## 🏃 Getting Started
