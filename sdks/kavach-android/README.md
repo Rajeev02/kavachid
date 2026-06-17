@@ -5,6 +5,9 @@
 
 ---
 
+**🔗 Source Code:** [Rajeev02/kavachid on GitHub](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-android)
+
+
 ## 📖 Overview
 The official Kavach Android SDK. Built from the ground up using modern Kotlin Coroutines and Flows, it interacts directly with AndroidX `BiometricPrompt` and the Android Keystore system.
 

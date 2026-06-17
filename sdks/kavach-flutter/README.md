@@ -5,6 +5,9 @@
 
 ---
 
+**🔗 Source Code:** [Rajeev02/kavachid on GitHub](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-flutter)
+
+
 ## 📖 Overview
 The official Kavach Flutter SDK. It provides cross-platform biometric authentication by securely bridging down to native iOS FaceID and Android Biometrics through highly optimized Dart platform channels.
 

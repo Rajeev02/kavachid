@@ -5,6 +5,9 @@
 
 ---
 
+**🔗 Source Code:** [Rajeev02/kavachid on GitHub](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-python)
+
+
 ## 📖 Overview
 The official Kavach Python SDK. While the frontend SDKs (React, iOS, Android) handle the user-facing biometrics, this SDK is designed strictly for **Backend Microservices** (FastAPI, Flask, Django, etc.). It acts as a high-level wrapper to communicate with your central Kavach Shield Engine (KSE) to evaluate user risk in real-time.
 

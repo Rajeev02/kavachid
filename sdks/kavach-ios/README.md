@@ -5,6 +5,9 @@
 
 ---
 
+**🔗 Source Code:** [Rajeev02/kavachid on GitHub](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-ios)
+
+
 ## 📖 Overview
 The official Kavach iOS SDK written in pure Swift. Designed for native iOS applications, it provides deep integration with Apple's `LocalAuthentication` framework and the Secure Enclave processor.
 

@@ -5,6 +5,9 @@
 
 ---
 
+**🔗 Source Code:** [Rajeev02/kavachid on GitHub](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-react-native)
+
+
 ## 📖 Overview
 The official Kavach React Native SDK. Unlike standard web libraries that fail inside mobile WebViews, this SDK utilizes the **New Architecture (TurboModules & Fabric)** to bridge directly to native iOS `LocalAuthentication` and Android `BiometricPrompt`.
 

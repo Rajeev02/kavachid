@@ -5,6 +5,9 @@
 
 ---
 
+**🔗 Source Code:** [Rajeev02/kavachid on GitHub](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-go)
+
+
 ## 📖 Overview
 The official Kavach Go SDK. Built for scale, this package provides strongly typed, high-performance HTTP and gRPC wrappers for Go microservices interacting with the Kavach Shield Engine (KSE). 
 
