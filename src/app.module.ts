@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 import { DatabaseModule } from './modules/database/database.module';
 import { TenantModule } from './modules/tenant/tenant.module';
 import { CryptoModule } from './modules/crypto/crypto.module';
@@ -10,6 +12,7 @@ import { SessionModule } from './modules/session/session.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { RoleModule } from './modules/role/role.module';
 import { AuditLogModule } from './modules/audit-log/audit-log.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { AppController } from './app.controller';
 
 @Module({
@@ -27,6 +30,11 @@ import { AppController } from './app.controller';
     AuthModule,
     RoleModule,
     AuditLogModule,
+    AdminModule,
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'admin-console', 'dist'),
+      serveRoot: '/admin',
+    }),
   ],
   controllers: [AppController],
   providers: [],

@@ -1,5 +1,5 @@
 import { Controller, Post, Get, Body, Req, Query, UseGuards, ValidationPipe, UsePipes, Headers, UnauthorizedException } from '@nestjs/common';
-import { Request } from 'express';
+import type { Request } from 'express';
 import { SessionService } from './session.service';
 import { LoginDto, RefreshDto } from './dto/session.dto';
 import { TenantGuard } from '../tenant/tenant.guard';

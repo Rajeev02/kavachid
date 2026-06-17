@@ -371,4 +371,146 @@ describe('AppController (e2e)', () => {
       expect(events[0].processedAt).toBeDefined();
     });
   });
+
+  describe('Admin Console APIs (e2e)', () => {
+    const adminEmail = `admin-e2e-${Date.now()}@kavachid.local`;
+    const regularEmail = `regular-e2e-${Date.now()}@kavachid.local`;
+    const password = 'SuperSecretPassword123!';
+    let adminToken = '';
+    let regularToken = '';
+    let adminUserId = '';
+
+    beforeAll(async () => {
+      // 1. Register admin user
+      const adminReg = await request(app.getHttpServer())
+        .post('/users/register')
+        .set('x-tenant-id', tenantId)
+        .send({ email: adminEmail, password })
+        .expect(201);
+      adminUserId = adminReg.body.user.id;
+
+      // Log in admin
+      const adminLogin = await request(app.getHttpServer())
+        .post('/auth/login')
+        .set('x-tenant-id', tenantId)
+        .send({ identifier: adminEmail, password })
+        .expect(201);
+      adminToken = adminLogin.body.accessToken;
+
+      // 2. Register regular user
+      await request(app.getHttpServer())
+        .post('/users/register')
+        .set('x-tenant-id', tenantId)
+        .send({ email: regularEmail, password })
+        .expect(201);
+
+      // Log in regular user
+      const regularLogin = await request(app.getHttpServer())
+        .post('/auth/login')
+        .set('x-tenant-id', tenantId)
+        .send({ identifier: regularEmail, password })
+        .expect(201);
+      regularToken = regularLogin.body.accessToken;
+    });
+
+    it('GET /admin/users - should reject unprivileged user with 403 Forbidden', () => {
+      return request(app.getHttpServer())
+        .get('/admin/users')
+        .set('x-tenant-id', tenantId)
+        .set('Authorization', `Bearer ${regularToken}`)
+        .expect(403);
+    });
+
+    it('GET /admin/users - should allow privileged user after role/permission assignment', async () => {
+      // 1. Create admin role
+      const roleRes = await request(app.getHttpServer())
+        .post('/roles')
+        .set('x-tenant-id', tenantId)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ name: 'Admin Console Role', description: 'System Administrator' })
+        .expect(201);
+      const roleId = roleRes.body.role.id;
+
+      // 2. Create permissions
+      const permRes1 = await request(app.getHttpServer())
+        .post('/permissions')
+        .set('x-tenant-id', tenantId)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ resource: 'users', action: 'read' })
+        .expect(201);
+      const usersReadId = permRes1.body.permission.id;
+
+      const permRes2 = await request(app.getHttpServer())
+        .post('/permissions')
+        .set('x-tenant-id', tenantId)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ resource: 'sessions', action: 'read' })
+        .expect(201);
+      const sessionsReadId = permRes2.body.permission.id;
+
+      const permRes3 = await request(app.getHttpServer())
+        .post('/permissions')
+        .set('x-tenant-id', tenantId)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ resource: 'audit_logs', action: 'read' })
+        .expect(201);
+      const logsReadId = permRes3.body.permission.id;
+
+      // 3. Link permissions to role
+      await request(app.getHttpServer())
+        .post(`/roles/${roleId}/permissions`)
+        .set('x-tenant-id', tenantId)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ permissionId: usersReadId })
+        .expect(201);
+
+      await request(app.getHttpServer())
+        .post(`/roles/${roleId}/permissions`)
+        .set('x-tenant-id', tenantId)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ permissionId: sessionsReadId })
+        .expect(201);
+
+      await request(app.getHttpServer())
+        .post(`/roles/${roleId}/permissions`)
+        .set('x-tenant-id', tenantId)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ permissionId: logsReadId })
+        .expect(201);
+
+      // 4. Assign role to admin user
+      await request(app.getHttpServer())
+        .post(`/users/${adminUserId}/roles`)
+        .set('x-tenant-id', tenantId)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ roleId })
+        .expect(201);
+
+      // 5. Verify admin user can list users
+      const usersList = await request(app.getHttpServer())
+        .get('/admin/users')
+        .set('x-tenant-id', tenantId)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+      expect(usersList.body.users).toBeDefined();
+      expect(usersList.body.users.length).toBeGreaterThanOrEqual(2);
+
+      // 6. Verify admin user can list sessions
+      const sessionsList = await request(app.getHttpServer())
+        .get('/admin/sessions')
+        .set('x-tenant-id', tenantId)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+      expect(sessionsList.body.sessions).toBeDefined();
+      expect(sessionsList.body.sessions.length).toBeGreaterThanOrEqual(1);
+
+      // 7. Verify admin user can list audit logs
+      const logsList = await request(app.getHttpServer())
+        .get('/admin/audit-logs')
+        .set('x-tenant-id', tenantId)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+      expect(logsList.body.logs).toBeDefined();
+    });
+  });
 });

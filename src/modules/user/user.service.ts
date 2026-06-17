@@ -16,7 +16,7 @@ export class UserService {
   /**
    * Register a new user in the active tenant context
    */
-  async registerUser(email: string, password?: string, username?: string, metadata?: any) {
+  async registerUser(email?: string, password?: string, username?: string, metadata?: any) {
     const tenantId = this.tenantContext.getRequiredTenantId();
 
     // Check if user already exists
