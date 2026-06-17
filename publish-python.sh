@@ -9,6 +9,9 @@ source venv/bin/activate
 echo "📦 Installing build tools..."
 pip install --upgrade pip build twine
 
+echo "🧹 Cleaning previous builds..."
+rm -rf dist build *.egg-info
+
 echo "📦 Building wheel..."
 python3 -m build
 
