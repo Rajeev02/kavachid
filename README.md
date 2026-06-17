@@ -109,12 +109,41 @@ npx ts-node test-kse.ts
 
 ---
 
-## 📦 Publishing the SDK
+## 📦 Publishing the SDKs
 
-To publish updates to the `@rajeev02/kavach-sdk` NPM package:
+The Kavach ecosystem uses a suite of automated shell scripts to publish your SDKs to their respective global registries.
 
-1. Ensure you are logged into NPM (`npm login`).
-2. Run the deployment script:
+### Web & React Native (NPM)
 ```bash
 ./publish.sh
 ```
+*Publishes `@rajeev02/kavach-web` and `@rajeev02/kavach-react-native` to the NPM Registry.*
+
+### iOS (CocoaPods)
+Navigate to `sdks/kavach-ios` and run:
+```bash
+pod trunk push KavachSDK.podspec
+```
+
+### Android (Maven Central)
+Navigate to `sdks/kavach-android` and run:
+```bash
+./gradlew publishToMavenLocal # For local testing
+# Or configure Sonatype credentials for Maven Central
+```
+
+### Flutter (Pub.dev)
+```bash
+./publish-flutter.sh
+```
+
+### Python (PyPI)
+```bash
+./publish-python.sh
+```
+
+### Go (Go Proxy)
+```bash
+./publish-go.sh v1.0.0
+```
+*Automatically tags the repository so the global Go Proxy indexes the new module version.*
