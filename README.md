@@ -233,12 +233,55 @@ const client = new KavachClient({
 
 ---
 
+## 🔐 SSO Account Chooser (Cross-Domain Single Sign-On)
+
+KavachID comes with native Single Sign-On (SSO) support that perfectly mimics modern Identity Providers (like Google Workspace). 
+
+By default, the SDK supports an `ssoMode` parameter:
+* `ssoMode: 'silent'` (Default): Automatically silently logs users into any KavachID application if they have an active session.
+* `ssoMode: 'prompt'`: Intercepts the login flow when navigating to a *new* application, displaying an interactive **"Continue as [Username]?"** Account Chooser. This lets users grant explicit consent to specific applications or easily switch accounts without losing their underlying session!
+
+```typescript
+const client = new KavachClient({
+  serverUrl: 'http://localhost:3000',
+  tenantId: '123e4567-e89b-12d3-a456-426614174000',
+  ssoMode: 'prompt' // Enables the Account Chooser UI flow
+});
+```
+
+---
+
+## 🗄️ Data Storage Architecture
+
+KavachID strictly segregates your sensitive data to guarantee Zero Trust security:
+
+### 1. Browser Storage (Frontend)
+The SDK utilizes `localStorage` (or secure native storage in mobile) to hold:
+* **JWT Tokens**: `kavach_access_token` and `kavach_refresh_token`.
+* **DPoP Keys**: `kavach_dpop_key` (A local RSA keypair used to cryptographically sign requests, ensuring token theft is useless).
+* **SSO Consent**: `kavach_consented_apps` (Tracks which apps the user has clicked "Continue as..." on).
+
+### 2. PostgreSQL Storage (Backend)
+The backend securely manages all persistence via **Prisma 7 ORM**:
+* **`User`**: Passwords (hashed via `argon2`), Emails, and Usernames.
+* **`Session` & `Device`**: Tracks IP Addresses, User Agents, and Timestamps for Active Sessions (allowing you to implement "Log out of all devices" instantly).
+* **`AuditLog`**: Stores the system's security trails (e.g. Failed login attempts, permission grants).
+
+### 🔍 Viewing Your Database (Prisma Studio)
+Because KavachID uses Prisma, you get a beautiful visual database browser out of the box!
+To view your Postgres data, run:
+```bash
+npx prisma studio
+```
+This opens a GUI at `http://localhost:5555` where you can view, edit, or delete records in your `User`, `Session`, and `AuditLog` tables instantly.
+
+---
+
 ## 🗺️ Recent Project Phases & Libraries
 
 * **Phase 11: Integration Libraries**: We've published standard wrappers for popular frameworks:
   * `@kavachid/react`: React context and `useKavach` hooks.
   * `@kavachid/react-native`: Secure storage adapters for mobile platforms.
-  * `@kavachid/express`: Fast local DPoP & JWKS validation middleware.
 * **Phase 12 & 13: Lightweight Example Suite & Load Testing**: We introduced the **Kavach Store Suite** under `examples/` (`kavach-store`, `kavach-customer`, `kavach-vendor`, `kavach-analytics`, `kavach-admin`), serving as no-build vanilla JS references. We also benchmarked the backend (`autocannon` load-tester), proving high-throughput concurrent DPoP and Argon2 hashing.
 
 ---

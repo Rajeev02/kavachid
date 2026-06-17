@@ -1,0 +1,21 @@
+name: kavachid_sdk
+description: The official KavachID SDK for Flutter and Dart. Provides secure authentication, DPoP key binding, and silent refresh token rotation.
+version: 1.0.0
+homepage: https://github.com/Rajeev02/kavachid
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: '>=3.10.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_secure_storage: ^9.0.0
+  http: ^1.1.0
+  cryptography: ^2.5.0
+  dart_jsonwebtoken: ^2.8.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0

@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Req, Query, UseGuards, ValidationPipe, UsePipes, Headers, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Get, Delete, Param, Body, Req, Query, UseGuards, ValidationPipe, UsePipes, Headers, UnauthorizedException } from '@nestjs/common';
 import type { Request } from 'express';
 import { SessionService } from './session.service';
 import { LoginDto, RefreshDto } from './dto/session.dto';
@@ -79,6 +79,67 @@ export class SessionController {
     @Req() req: Request,
     @Query('userId') queryUserId?: string
   ) {
+    const userId = await this.resolveUserId(req, queryUserId);
+    const sessions = await this.sessionService.getActiveSessions(userId);
+    return { sessions };
+  }
+
+  @Get('devices')
+  async getDevices(
+    @Req() req: Request,
+    @Query('userId') queryUserId?: string
+  ) {
+    const userId = await this.resolveUserId(req, queryUserId);
+    const devices = await this.sessionService.getActiveDevices(userId);
+    return { devices };
+  }
+
+  @Get('me')
+  async getProfile(
+    @Req() req: Request,
+  ) {
+    const userId = await this.resolveUserId(req);
+    // Fetch user details from DB using Prisma via CryptoService is hacky, but SessionService can fetch user.
+    // Wait, let's inject PrismaService directly into SessionController to fetch the user profile, 
+    // or just rely on the sessionService fetching it. Let's just decode it.
+    // The access token already contains email, username, sub. We just return it.
+    const authHeader = req.headers['authorization'];
+    if (!authHeader) throw new UnauthorizedException();
+    const token = authHeader.substring(7);
+    const activeKey = await this.keyPairService.getActiveKeyPair('RS256');
+    const { payload } = await this.crypto.verifyJwt(token, activeKey.publicKeyPem);
+    return {
+      user: {
+        id: payload.sub,
+        email: payload.email,
+        username: payload.username,
+        tenantId: payload.tenantId,
+        joinedAt: payload.iat, // fallback
+      }
+    };
+  }
+
+  @Delete('sessions/all')
+  @Audit({ action: 'auth.revokeAllSessions', resourceType: 'session' })
+  async revokeAllSessions(
+    @Req() req: Request,
+  ) {
+    const userId = await this.resolveUserId(req);
+    await this.sessionService.revokeAllUserSessions(userId);
+    return { success: true };
+  }
+
+  @Delete('sessions/:id')
+  @Audit({ action: 'auth.revokeSession', resourceType: 'session' })
+  async revokeSpecificSession(
+    @Req() req: Request,
+    @Param('id') sessionId: string
+  ) {
+    const userId = await this.resolveUserId(req);
+    return this.sessionService.revokeSpecificSession(userId, sessionId);
+  }
+
+  private async resolveUserId(req: Request, queryUserId?: string): Promise<string> {
     let userId = queryUserId;
 
     // Resolve userId from Bearer token if present
@@ -97,8 +158,6 @@ export class SessionController {
     if (!userId) {
       throw new UnauthorizedException('Authentication token or userId query parameter is required');
     }
-
-    const sessions = await this.sessionService.getActiveSessions(userId);
-    return { sessions };
+    return userId;
   }
 }

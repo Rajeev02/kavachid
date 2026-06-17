@@ -18,6 +18,13 @@
     "@kavachid/sdk": "^1.0.0"
   },
   "devDependencies": {
-    "typescript": "^5.3.0"
+    "typescript": "^5.3.0",
+    "react": "18.2.0",
+    "react-native": "0.74.0"
+  },
+  "codegenConfig": {
+    "name": "RNKavachSpec",
+    "type": "modules",
+    "jsSrcsDir": "src"
   }
 }

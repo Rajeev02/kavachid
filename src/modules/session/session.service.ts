@@ -322,9 +322,54 @@ export class SessionService {
   }
 
   /**
+   * Get active devices for a user
+   */
+  async getActiveDevices(userId: string) {
+    const tenantId = this.tenantContext.getRequiredTenantId();
+    return this.prisma.device.findMany({
+      where: {
+        tenantId,
+        userId,
+      },
+      select: {
+        id: true,
+        fingerprint: true,
+        platform: true,
+        deviceName: true,
+        createdAt: true,
+        lastSeenAt: true,
+      },
+      orderBy: { lastSeenAt: 'desc' },
+    });
+  }
+
+  /**
+   * Revoke a specific session for a user by sessionId
+   */
+  async revokeSpecificSession(userId: string, sessionId: string) {
+    const tenantId = this.tenantContext.getRequiredTenantId();
+    
+    const session = await this.prisma.session.findUnique({
+      where: { tenantId_id: { tenantId, id: sessionId } }
+    });
+
+    if (!session || session.userId !== userId) {
+      throw new NotFoundException('Session not found');
+    }
+
+    await this.prisma.session.update({
+      where: { tenantId_id: { tenantId, id: sessionId } },
+      data: { revokedAt: new Date() },
+    });
+
+    await this.outbox.createEvent(tenantId, 'SessionRevoked', { sessionId });
+    return { success: true };
+  }
+
+  /**
    * Revoke all active sessions for a specific user
    */
-  private async revokeAllUserSessions(userId: string) {
+  public async revokeAllUserSessions(userId: string) {
     const tenantId = this.tenantContext.getRequiredTenantId();
     await this.prisma.session.updateMany({
       where: {
@@ -336,5 +381,6 @@ export class SessionService {
         revokedAt: new Date(),
       },
     });
+    await this.outbox.createEvent(tenantId, 'AllSessionsRevoked', { userId });
   }
 }

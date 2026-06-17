@@ -8,11 +8,13 @@ export class KavachAuthHelper {
     this.serverUrl = config.serverUrl || 'http://localhost:3000';
     this.tenantId = config.tenantId || '123e4567-e89b-12d3-a456-426614174000';
     this.appName = config.appName || 'KavachID App';
+    this.ssoMode = config.ssoMode || 'silent';
     this.onAuthSuccess = config.onAuthSuccess || (() => {});
     
     this.client = new KavachClient({
       serverUrl: this.serverUrl,
-      tenantId: this.tenantId
+      tenantId: this.tenantId,
+      ssoMode: this.ssoMode
     });
 
     this.init();
@@ -82,7 +84,7 @@ export class KavachAuthHelper {
       toggleAction.addEventListener('click', () => {
         this.isRegisterMode = !this.isRegisterMode;
         if (this.isRegisterMode) {
-          usernameGroup.style.display = 'flex';
+          usernameGroup.style.display = 'block';
           submitBtn.textContent = 'Register Account';
           toggleAction.textContent = 'Sign In';
         } else {
@@ -125,13 +127,23 @@ export class KavachAuthHelper {
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
       logoutBtn.addEventListener('click', async () => {
-        try {
-          await this.client.logout();
-        } catch (err) {
-          console.warn('Logout failed', err);
+        if (this.ssoMode === 'prompt') {
+          // Log out of THIS app only (remove from consented list)
+          try {
+            let consentedApps = JSON.parse(localStorage.getItem('kavach_consented_apps') || '[]');
+            consentedApps = consentedApps.filter(app => app !== this.appName);
+            localStorage.setItem('kavach_consented_apps', JSON.stringify(consentedApps));
+          } catch(e) {}
+          window.location.reload();
+        } else {
+          // Fallback to global logout if not using SSO prompt mode
+          try {
+            await this.client.logout();
+          } catch (err) {
+            console.warn('Logout failed', err);
+          }
+          window.location.reload();
         }
-        setUserState(null);
-        window.location.reload();
       });
     }
   }
@@ -149,6 +161,19 @@ export class KavachAuthHelper {
   async checkAuthStatus() {
     const token = await this.client.getAccessToken();
     if (token) {
+      if (this.client.ssoMode === 'prompt') {
+        let consentedApps = [];
+        try {
+          consentedApps = JSON.parse(localStorage.getItem('kavach_consented_apps') || '[]');
+        } catch(e){}
+
+        if (!consentedApps.includes(this.appName)) {
+          const profileData = await this.client.getProfile().catch(() => ({ user: {} }));
+          this.showSsoPrompt(profileData.user);
+          return;
+        }
+      }
+
       this.showDashboard();
       this.onAuthSuccess(this.client);
     } else {
@@ -156,13 +181,162 @@ export class KavachAuthHelper {
     }
   }
 
-  showDashboard() {
+  showSsoPrompt(user) {
     if (this.authView) this.authView.style.display = 'none';
-    if (this.dashboardView) this.dashboardView.style.display = 'block';
+    if (this.dashboardView) this.dashboardView.style.display = 'none';
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) logoutBtn.style.display = 'none';
+
+    let ssoView = document.getElementById('sso-prompt-view');
+    if (!ssoView) {
+      ssoView = document.createElement('div');
+      ssoView.id = 'sso-prompt-view';
+      document.querySelector('.main-container').appendChild(ssoView);
+    }
+
+    ssoView.style.display = 'block';
+    const displayName = user.username || user.email || 'User';
+    ssoView.innerHTML = `
+      <div class="auth-panel" style="max-width: 450px; margin: 4rem auto; animation: floatUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;">
+        <h2>🔐 KavachID SSO</h2>
+        <p>You are already signed in to KavachID.</p>
+        <div class="card" style="margin: 1.5rem 0; text-align: left; background: rgba(0,0,0,0.4);">
+          <p><strong>Email:</strong> ${user.email || 'N/A'}</p>
+          <p><strong>Username:</strong> ${user.username || 'N/A'}</p>
+        </div>
+        <p style="margin-bottom: 1.5rem; color: var(--text-main);">Continue to <strong>${this.appName}</strong> as ${displayName}?</p>
+        <button id="sso-continue-btn" class="btn btn-full">Continue as ${displayName}</button>
+        <button id="sso-switch-btn" class="btn btn-secondary btn-full" style="margin-top: 1rem;">Switch Account</button>
+      </div>
+    `;
+
+    document.getElementById('sso-continue-btn').addEventListener('click', () => {
+      let consentedApps = [];
+      try {
+        consentedApps = JSON.parse(localStorage.getItem('kavach_consented_apps') || '[]');
+      } catch(e){}
+      if (!consentedApps.includes(this.appName)) {
+        consentedApps.push(this.appName);
+        localStorage.setItem('kavach_consented_apps', JSON.stringify(consentedApps));
+      }
+      ssoView.style.display = 'none';
+      this.showDashboard();
+      this.onAuthSuccess(this.client);
+    });
+
+    document.getElementById('sso-switch-btn').addEventListener('click', async () => {
+      ssoView.style.display = 'none';
+      try {
+        await this.client.logout();
+      } catch (err) {}
+      this.showAuthForm();
+    });
+  }
+
+  async showDashboard() {
+    if (this.authView) this.authView.style.display = 'none';
+    if (this.dashboardView) {
+      this.dashboardView.style.display = 'block';
+      await this.renderProfileAndSecurity();
+    }
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) logoutBtn.style.display = 'inline-block';
+  }
+
+  async renderProfileAndSecurity() {
+    try {
+      // Fetch data
+      const [profileData, sessionsData, devicesData] = await Promise.all([
+        this.client.getProfile().catch(() => ({ user: {} })),
+        this.client.getSessions().catch(() => ({ sessions: [] })),
+        this.client.getDevices().catch(() => ({ devices: [] }))
+      ]);
+
+      const user = profileData.user || {};
+      const sessions = sessionsData.sessions || [];
+      const devices = devicesData.devices || [];
+
+      // Find or create the profile container
+      let container = document.getElementById('kavach-security-profile');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'kavach-security-profile';
+        container.className = 'security-profile-container';
+        this.dashboardView.appendChild(container);
+      }
+
+      container.innerHTML = `
+        <div class="profile-card">
+          <h3>👤 User Profile</h3>
+          <p><strong>Email:</strong> ${user.email || 'N/A'}</p>
+          <p><strong>Username:</strong> ${user.username || 'N/A'}</p>
+          <p><strong>User ID:</strong> <span class="mono">${user.id || 'N/A'}</span></p>
+        </div>
+
+        <div class="security-grid">
+          <div class="security-card">
+            <h3>📱 Trusted Devices (${devices.length})</h3>
+            <ul class="device-list">
+              ${devices.map(d => `
+                <li>
+                  <strong>${d.platform || 'Unknown Device'}</strong>
+                  <br>Seen: ${new Date(d.lastSeenAt).toLocaleString()}
+                </li>
+              `).join('') || '<li>No devices found</li>'}
+            </ul>
+          </div>
+
+          <div class="security-card">
+            <h3>🌐 Active Sessions (${sessions.length})</h3>
+            <ul class="session-list">
+              ${sessions.map(s => `
+                <li>
+                  <strong>IP:</strong> ${s.ipAddress}
+                  <br><strong>Agent:</strong> ${s.userAgent || 'Unknown'}
+                  <br>Seen: ${new Date(s.lastSeenAt).toLocaleString()}
+                  <br><button class="btn btn-small btn-danger" onclick="window.kavachAuth.revokeSession('${s.id}')">Revoke Session</button>
+                </li>
+              `).join('') || '<li>No active sessions</li>'}
+            </ul>
+            <div style="margin-top: 15px;">
+              <button id="logout-all-btn" class="btn btn-full btn-danger">Log Out of ALL Devices</button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Expose to window for the inline onclick handler
+      window.kavachAuth = this;
+
+      document.getElementById('logout-all-btn')?.addEventListener('click', async () => {
+        if (confirm('Are you sure you want to log out of ALL devices and sessions?')) {
+          await this.client.logoutAll();
+          window.location.reload();
+        }
+      });
+
+    } catch (err) {
+      console.error('Failed to render profile & security', err);
+    }
+  }
+
+  async revokeSession(sessionId) {
+    try {
+      await this.client.revokeSession(sessionId);
+      await this.renderProfileAndSecurity(); // refresh UI
+    } catch (err) {
+      alert('Failed to revoke session: ' + err.message);
+    }
   }
 
   showAuthForm() {
     if (this.authView) this.authView.style.display = 'block';
-    if (this.dashboardView) this.dashboardView.style.display = 'none';
+    if (this.dashboardView) {
+      this.dashboardView.style.display = 'none';
+      const container = document.getElementById('kavach-security-profile');
+      if (container) container.remove();
+    }
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) logoutBtn.style.display = 'none';
   }
 }

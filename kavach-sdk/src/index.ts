@@ -4,12 +4,14 @@ import { DPoPKeyManager } from './dpop.js';
 export interface KavachClientOptions {
   serverUrl: string;
   tenantId: string;
+  ssoMode?: 'silent' | 'prompt';
   storage?: StorageProvider;
 }
 
 export class KavachClient {
   private readonly serverUrl: string;
   private readonly tenantId: string;
+  public readonly ssoMode: 'silent' | 'prompt';
   private readonly storage: StorageProvider;
   private readonly dpop: DPoPKeyManager;
 
@@ -18,6 +20,7 @@ export class KavachClient {
       ? options.serverUrl.slice(0, -1)
       : options.serverUrl;
     this.tenantId = options.tenantId;
+    this.ssoMode = options.ssoMode || 'silent';
     
     // Choose default storage (localStorage in browsers, Memory fallback elsewhere)
     this.storage = options.storage || (
@@ -163,6 +166,55 @@ export class KavachClient {
       await this.storage.removeItem('kavach_access_token');
       await this.storage.removeItem('kavach_refresh_token');
     }
+  }
+
+  /**
+   * Get Current User Profile
+   */
+  async getProfile(): Promise<any> {
+    const response = await this.authenticatedFetch('/auth/me', { method: 'GET' });
+    if (!response.ok) throw new Error('Failed to fetch profile');
+    return response.json();
+  }
+
+  /**
+   * Get Active Sessions
+   */
+  async getSessions(): Promise<any> {
+    const response = await this.authenticatedFetch('/auth/sessions', { method: 'GET' });
+    if (!response.ok) throw new Error('Failed to fetch sessions');
+    return response.json();
+  }
+
+  /**
+   * Get Active Devices
+   */
+  async getDevices(): Promise<any> {
+    const response = await this.authenticatedFetch('/auth/devices', { method: 'GET' });
+    if (!response.ok) throw new Error('Failed to fetch devices');
+    return response.json();
+  }
+
+  /**
+   * Revoke All Sessions (Log out of all devices)
+   */
+  async logoutAll(): Promise<void> {
+    try {
+      await this.authenticatedFetch('/auth/sessions/all', { method: 'DELETE' });
+    } catch (err) {
+      console.warn('Failed to revoke all sessions', err);
+    } finally {
+      await this.storage.removeItem('kavach_access_token');
+      await this.storage.removeItem('kavach_refresh_token');
+    }
+  }
+
+  /**
+   * Revoke specific session by ID
+   */
+  async revokeSession(sessionId: string): Promise<void> {
+    const response = await this.authenticatedFetch(`/auth/sessions/${sessionId}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error('Failed to revoke session');
   }
 
   /**

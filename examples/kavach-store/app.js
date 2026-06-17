@@ -2,6 +2,7 @@ import { KavachAuthHelper } from '../shared/auth-helper.js';
 
 new KavachAuthHelper({
   appName: 'Kavach Store',
+  ssoMode: 'prompt',
   onAuthSuccess: async (client) => {
     // 1. Fetch active sessions using the SDK
     try {
