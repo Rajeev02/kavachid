@@ -159,6 +159,10 @@ const client = new KavachClient({
 });
 ```
 
+> [!CAUTION]
+> **Client-Side vs. Server-Side Security Split**
+> The client-side `KavachClient` parameters are strictly public configuration coordinates (API endpoints, Tenant UUIDs, Client IDs). **Never** pass database connection strings, credentials, or backend API secrets directly to client-side code. All database connections and master encryption keys belong exclusively on your secure backend server configuration under `KavachCoreModule.forRoot(...)`.
+
 ### 2. Password Credentials Sign-in & Registration
 ```typescript
 // Register account
