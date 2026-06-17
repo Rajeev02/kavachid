@@ -1,70 +1,108 @@
-<div align="center">
-  <h1>🛡️ KavachSDK (iOS)</h1>
-  <p><b>Native Swift SDK for the Kavach Shield Engine</b></p>
-</div>
+# KavachSDK (iOS)
+
+Native Swift iOS SDK for the Kavach Shield Engine.
+
+[![Version](https://img.shields.io/badge/version-1.0.4-blue.svg)](https://cocoapods.org/pods/KavachSDK)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![Platform Support](https://img.shields.io/badge/platform-iOS-lightgrey.svg)]()
 
 ---
 
-**🔗 Source Code:** [Rajeev02/kavachid on GitHub](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-ios)
+## TL;DR
 
+A pure Swift implementation of the Kavach Engine allowing hardware-backed FaceID/TouchID integrations.
 
-## 📖 Overview
-The official Kavach iOS SDK written in pure Swift. Designed for native iOS applications, it provides deep integration with Apple's `LocalAuthentication` framework and the Secure Enclave processor.
+**Who should use it:** iOS Engineers building native Swift/SwiftUI applications.
 
-## ✨ Key Features
-*   **Secure Enclave Integration:** Cryptographic keys are generated and stored exclusively within the iPhone's Secure Enclave, making them physically impossible to extract.
-*   **FaceID & TouchID:** Seamless presentation of the native Apple biometric UI.
-*   **Keychain Access:** High-level wrappers for saving, retrieving, and securely deleting session tokens using `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`.
-*   **Device Attestation:** Validates device integrity using Apple's DeviceCheck APIs.
+**Quickest way to get started:** Add `pod 'KavachSDK'` to your Podfile.
 
-## 🏆 Why Use This Library?
-*   **First-Party Performance:** Written entirely in Swift 5+, guaranteeing minimal memory footprint and maximum performance.
-*   **Zero Third-Party Dependencies:** Does not rely on Alamofire or other heavy networking libraries. It uses pure `URLSession`.
-*   **Enterprise-Grade Security:** Meets strict compliance requirements (SOC2, HIPAA) by guaranteeing hardware-backed key attestation.
+---
 
-## 🚀 Installation
+## Table of Contents
 
-### CocoaPods
+- [Overview](#overview)
+- [Features](#features)
+- [Compatibility Matrix](#compatibility-matrix)
+- [Quick Start](#quick-start)
+- [Usage](#usage)
+- [Troubleshooting](#troubleshooting)
+- [Documentation](#documentation)
+- [License](#license)
+
+*(For global architecture, CI/CD, and security guidelines, see the [Root README](../../README.md))*
+
+---
+
+## Overview
+
+**Technical Value:** Directly utilizes Apple's `LocalAuthentication` and `Security` frameworks to ensure biometric data never leaves the Secure Enclave.
+
+---
+
+## Features
+
+| Feature | Description | Status |
+| ------- | ----------- | ------ |
+| **FaceID / TouchID** | Natively triggers LAContext biometric prompts. | Stable |
+| **Keychain Storage** | Cryptographically secures session tokens. | Stable |
+
+---
+
+## Compatibility Matrix
+
+| Component | Supported Version |
+| :--- | :--- |
+| **Swift** | 5.0+ |
+| **iOS** | 13.0+ |
+
+---
+
+## Quick Start
+
+### Install
+Add to your `Podfile`:
 ```ruby
-pod 'KavachSDK', '~> 1.0.1'
+pod 'KavachSDK', '~> 1.0.4'
 ```
-### Swift Package Manager (SPM)
-Add `https://github.com/Rajeev02/kavachid.git` in Xcode -> File -> Add Packages.
+```bash
+pod install
+```
 
-## 💻 Detailed Usage
+---
 
-### 1. Initialization
+## Usage
+
+### Basic Usage
 ```swift
 import KavachSDK
 
-let kavach = KavachClient(serverUrl: "https://api.yourdomain.com")
-```
+let kavach = KavachClient.shared
 
-### 2. FaceID Authentication
-Make sure to add `NSFaceIDUsageDescription` to your `Info.plist` before calling this!
-```swift
-kavach.loginWithFaceID(email: "user@example.com", reason: "Access your secure vault") { result in
-    DispatchQueue.main.async {
-        switch result {
-        case .success(let sessionToken):
-            print("Successfully authenticated via Secure Enclave!")
-            // Token is automatically saved to the iOS Keychain
-        case .failure(let error):
-            print("Authentication failed: \(error.localizedDescription)")
-        }
+kavach.authenticate(reason: "Login to your account") { result in
+    switch result {
+    case .success(let token):
+        print("Success: \(token)")
+    case .failure(let error):
+        print("Error: \(error)")
     }
 }
 ```
 
-## 🌐 The Kavach Ecosystem
-Kavach provides native SDKs for all major platforms:
+---
 
-| Platform | Source Code (GitHub) | Package Registry |
-| :--- | :--- | :--- |
-| **🌍 Web** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-web) | [NPM: @rajeev02/kavach-web](https://www.npmjs.com/package/@rajeev02/kavach-web) |
-| **📱 React Native** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-react-native) | [NPM: @rajeev02/kavach-react-native](https://www.npmjs.com/package/@rajeev02/kavach-react-native) |
-| **🍎 iOS (Swift)** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-ios) | [CocoaPods: KavachSDK](https://cocoapods.org/pods/KavachSDK) |
-| **🤖 Android (Kotlin)** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-android) | [Maven: io.github.rajeev02.kavach](https://central.sonatype.com/artifact/io.github.rajeev02.kavach/kavach-android) |
-| **🐦 Flutter** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-flutter) | [Pub.dev: kavach_flutter](https://pub.dev/packages/kavach_flutter) |
-| **🐍 Python** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-python) | [PyPI: rajeev02-kavach-sdk](https://pypi.org/project/rajeev02-kavach-sdk/) |
-| **🐹 Go** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-go) | [pkg.go.dev](https://pkg.go.dev/github.com/Rajeev02/kavachid/sdks/kavach-go) |
+## Troubleshooting
+
+*   **Missing Info.plist Key:** You MUST add `NSFaceIDUsageDescription` to your application's `Info.plist` or the app will crash when attempting to use FaceID.
+
+---
+
+## Documentation
+
+*   [Kavach Ecosystem Root](../../README.md)
+*   [iOS Sample](../../samples/kavach-ios)
+
+---
+
+## License
+
+Distributed under the MIT License. See `LICENSE` for more information.

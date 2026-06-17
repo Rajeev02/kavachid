@@ -1,78 +1,106 @@
-<div align="center">
-  <h1>🛡️ kavach_flutter</h1>
-  <p><b>Dart SDK for the Kavach Shield Engine</b></p>
-</div>
+# kavach_flutter
+
+Flutter SDK for the Kavach Shield Engine.
+
+[![Version](https://img.shields.io/badge/version-1.0.4-blue.svg)](https://pub.dev/packages/kavach_flutter)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![Platform Support](https://img.shields.io/badge/platform-Flutter-lightgrey.svg)]()
 
 ---
 
-**🔗 Source Code:** [Rajeev02/kavachid on GitHub](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-flutter)
+## TL;DR
 
+The Flutter SDK provides a unified Dart interface to the native iOS and Android biometric and device fingerprinting APIs.
 
-## 📖 Overview
-The official Kavach Flutter SDK. It provides cross-platform biometric authentication by securely bridging down to native iOS FaceID and Android Biometrics through highly optimized Dart platform channels.
+**Who should use it:** Flutter developers building cross-platform apps requiring high-security biometric authentication.
 
-## ✨ Key Features
-*   **Write Once, Authenticate Anywhere:** A single Dart API call triggers the correct native UI on both iOS and Android.
-*   **Platform Channel Optimization:** Extremely low latency communication between Dart and native layers.
-*   **Secure Storage Wrapper:** Includes a built-in wrapper for `flutter_secure_storage` to ensure session tokens are never stored in plain text.
-*   **Device Fingerprinting:** Extracts underlying device hardware IDs for risk-engine evaluation.
+**Quickest way to get started:** Add `kavach_flutter` to your `pubspec.yaml`.
 
-## 🏆 Why Use This Library?
-*   **Saves Development Time:** Eliminates the need to write custom Swift and Kotlin bridging code for authentication.
-*   **Type Safety:** 100% null-safe Dart code with strong typing for all API responses.
-*   **Consistent UX:** Ensures your users see the OS-standard biometric prompts they trust, rather than custom UI dialogs.
+---
 
-## 🚀 Installation (Pub.dev)
+## Table of Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Compatibility Matrix](#compatibility-matrix)
+- [Quick Start](#quick-start)
+- [Usage](#usage)
+- [Troubleshooting](#troubleshooting)
+- [Documentation](#documentation)
+- [License](#license)
+
+*(For global architecture, CI/CD, and security guidelines, see the [Root README](../../README.md))*
+
+---
+
+## Overview
+
+**Technical Value:** Wraps the native `KavachClient` in iOS and Android using standard Flutter `MethodChannel` and Dart FFI to abstract away native complexities.
+
+---
+
+## Features
+
+| Feature | Description | Status |
+| ------- | ----------- | ------ |
+| **MethodChannels** | Unified native communication layer. | Stable |
+| **Biometric Scans** | FaceID/TouchID/Fingerprint integration. | Stable |
+
+---
+
+## Compatibility Matrix
+
+| Component | Supported Version |
+| :--- | :--- |
+| **Flutter** | 3.0+ |
+| **Dart** | 3.0+ |
+
+---
+
+## Quick Start
+
+### Install
 Add to your `pubspec.yaml`:
 ```yaml
 dependencies:
-  kavach_flutter: ^1.0.1
+  kavach_flutter: ^1.0.4
 ```
 
-## 💻 Detailed Usage
+---
 
-### 1. Initialization
+## Usage
+
+### Basic Usage
 ```dart
 import 'package:kavach_flutter/kavach_flutter.dart';
 
-// Initialize the singleton client
-final kavach = KavachClient(
-  serverUrl: 'https://api.yourdomain.com',
-  enableTelemetry: true // Sends device fingerprints for risk analysis
-);
-```
-
-### 2. Authenticating
-```dart
-Future<void> handleLogin() async {
-  // Check if hardware is present and enrolled
-  final canCheckBiometrics = await kavach.canCheckBiometrics;
+void main() async {
+  final kavach = KavachClient();
   
-  if (canCheckBiometrics) {
-    try {
-      final sessionToken = await kavach.loginWithBiometrics(
-        email: 'user@example.com',
-        localizedReason: 'Please authenticate to access your secure vault.',
-      );
-      print('Authentication successful: $sessionToken');
-    } catch (e) {
-      print('Authentication failed: $e');
-    }
-  } else {
-    print('Device does not support biometrics. Fallback to PIN.');
+  try {
+    final token = await kavach.authenticate(reason: "Secure Login");
+    print("Token: $token");
+  } catch (e) {
+    print("Failed: $e");
   }
 }
 ```
 
-## 🌐 The Kavach Ecosystem
-Kavach provides native SDKs for all major platforms:
+---
 
-| Platform | Source Code (GitHub) | Package Registry |
-| :--- | :--- | :--- |
-| **🌍 Web** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-web) | [NPM: @rajeev02/kavach-web](https://www.npmjs.com/package/@rajeev02/kavach-web) |
-| **📱 React Native** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-react-native) | [NPM: @rajeev02/kavach-react-native](https://www.npmjs.com/package/@rajeev02/kavach-react-native) |
-| **🍎 iOS (Swift)** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-ios) | [CocoaPods: KavachSDK](https://cocoapods.org/pods/KavachSDK) |
-| **🤖 Android (Kotlin)** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-android) | [Maven: io.github.rajeev02.kavach](https://central.sonatype.com/artifact/io.github.rajeev02.kavach/kavach-android) |
-| **🐦 Flutter** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-flutter) | [Pub.dev: kavach_flutter](https://pub.dev/packages/kavach_flutter) |
-| **🐍 Python** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-python) | [PyPI: rajeev02-kavach-sdk](https://pypi.org/project/rajeev02-kavach-sdk/) |
-| **🐹 Go** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-go) | [pkg.go.dev](https://pkg.go.dev/github.com/Rajeev02/kavachid/sdks/kavach-go) |
+## Troubleshooting
+
+*   **Missing iOS Permissions:** Ensure `NSFaceIDUsageDescription` is in your iOS `Info.plist`.
+
+---
+
+## Documentation
+
+*   [Kavach Ecosystem Root](../../README.md)
+*   [Flutter Sample](../../samples/kavach-flutter)
+
+---
+
+## License
+
+Distributed under the MIT License. See `LICENSE` for more information.

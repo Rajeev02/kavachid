@@ -1,95 +1,108 @@
-<div align="center">
-  <h1>🛡️ kavach-go</h1>
-  <p><b>Go Backend Client for Kavach Shield Engine</b></p>
-</div>
+# Kavach Go SDK
+
+Go Backend SDK for Kavach Shield Engine integration.
+
+[![Version](https://img.shields.io/badge/version-1.0.4-blue.svg)](https://pkg.go.dev/github.com/Rajeev02/kavachid/sdks/kavach-go)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![Platform Support](https://img.shields.io/badge/platform-Go-lightgrey.svg)]()
 
 ---
 
-**🔗 Source Code:** [Rajeev02/kavachid on GitHub](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-go)
+## TL;DR
 
+The Go SDK provides highly concurrent, low-latency utilities to integrate Go backends with the Kavach Shield Engine.
 
-## 📖 Overview
-The official Kavach Go SDK. Built for scale, this package provides strongly typed, high-performance HTTP and gRPC wrappers for Go microservices interacting with the Kavach Shield Engine (KSE). 
+**Who should use it:** Backend engineers building high-throughput Go microservices requiring token validation and KSE integration.
 
-## ✨ Key Features
-*   **gRPC & HTTP Support:** Choose between lightweight HTTP REST or ultra-low-latency Protocol Buffers (gRPC) communication with the Engine.
-*   **Concurrency Safe:** The `KavachClient` singleton is fully thread-safe and optimized for heavy multi-goroutine workloads.
-*   **Context Aware:** Fully supports Go `context.Context` for proper timeout management and request cancellation across microservices.
-*   **Advanced Caching:** Optional built-in Redis caching layer to cache repeated risk evaluations and reduce load on the central engine.
+**Quickest way to get started:** Install via `go get`.
 
-## 🏆 Why Use This Library?
-*   **Nanosecond Latency:** Designed for environments where adding >5ms overhead to an API route is unacceptable.
-*   **Strict Typing:** Eliminates JSON parsing errors with rigidly defined structs for all Risk Policies and Actions.
-*   **Enterprise Scale:** Used to secure thousands of requests per second in distributed backend architectures.
+---
 
-## 🚀 Installation (Go Proxy)
+## Table of Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Compatibility Matrix](#compatibility-matrix)
+- [Quick Start](#quick-start)
+- [Usage](#usage)
+- [Troubleshooting](#troubleshooting)
+- [Documentation](#documentation)
+- [License](#license)
+
+*(For global architecture, CI/CD, and security guidelines, see the [Root README](../../README.md))*
+
+---
+
+## Overview
+
+**Technical Value:** Uses native Goroutines to asynchronously fetch KSE Risk Scores in the background without blocking standard API I/O operations.
+
+---
+
+## Features
+
+| Feature | Description | Status |
+| ------- | ----------- | ------ |
+| **Token Validation** | Ed25519 / RS256 JWT validation. | Stable |
+| **Goroutine Ready** | Thread-safe caching of KSE policies. | Stable |
+
+---
+
+## Compatibility Matrix
+
+| Component | Supported Version |
+| :--- | :--- |
+| **Go** | 1.20+ |
+
+---
+
+## Quick Start
+
+### Install
 ```bash
 go get github.com/Rajeev02/kavachid/sdks/kavach-go
 ```
 
-## 💻 Detailed Usage
+---
 
-### 1. Initialization
+## Usage
+
+### Basic Usage
 ```go
 package main
 
 import (
-    "context"
-    "fmt"
-    "time"
-    "github.com/Rajeev02/kavachid/sdks/kavach-go/client"
-    "github.com/Rajeev02/kavachid/sdks/kavach-go/models"
+	"fmt"
+	"github.com/Rajeev02/kavachid/sdks/kavach-go"
 )
 
 func main() {
-    // Initialize the thread-safe client once
-    kse := client.NewKavachShieldClient(client.Config{
-        ServerURL: "https://api.yourdomain.com",
-        APIKey:    "sk_live_123",
-        Timeout:   2 * time.Second,
-    })
-    
-    // ...
+	kavach := kavach.NewClient("https://api.yourdomain.com/kavach")
+	
+	valid, err := kavach.VerifyToken("eyJhbG...")
+	if err != nil || !valid {
+		fmt.Println("Access Denied!")
+	} else {
+		fmt.Println("Access Granted!")
+	}
 }
 ```
 
-### 2. Evaluating Risk
-```go
-func handleSensitiveAction(ctx context.Context, kse *client.KavachShieldClient, userID string) {
-    req := models.EvaluationRequest{
-        UserID:              userID,
-        ActionType:          models.ActionDataExport,
-        TargetSecurityLevel: models.SecurityLevelHigh,
-        IPAddress:           "192.168.1.50",
-        DeviceFingerprint:   "ios_device_id_hash",
-    }
+---
 
-    result, err := kse.Evaluate(ctx, req)
-    if err != nil {
-        // Handle engine timeout or networking error
-        return
-    }
+## Troubleshooting
 
-    switch result.Decision {
-    case models.DecisionAllow:
-        fmt.Println("Action authorized.")
-    case models.DecisionDeny:
-        fmt.Println("Action blocked due to risk policy.")
-    case models.DecisionStepUpRequired:
-        fmt.Println("401 MFA Required: Client must provide biometrics.")
-    }
-}
-```
+*   **Module Not Found:** If `go get` fails, ensure your GOPROXY is correctly configured or run `GOPRIVATE=github.com/Rajeev02/kavachid go get ...`.
 
-## 🌐 The Kavach Ecosystem
-Kavach provides native SDKs for all major platforms:
+---
 
-| Platform | Source Code (GitHub) | Package Registry |
-| :--- | :--- | :--- |
-| **🌍 Web** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-web) | [NPM: @rajeev02/kavach-web](https://www.npmjs.com/package/@rajeev02/kavach-web) |
-| **📱 React Native** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-react-native) | [NPM: @rajeev02/kavach-react-native](https://www.npmjs.com/package/@rajeev02/kavach-react-native) |
-| **🍎 iOS (Swift)** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-ios) | [CocoaPods: KavachSDK](https://cocoapods.org/pods/KavachSDK) |
-| **🤖 Android (Kotlin)** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-android) | [Maven: io.github.rajeev02.kavach](https://central.sonatype.com/artifact/io.github.rajeev02.kavach/kavach-android) |
-| **🐦 Flutter** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-flutter) | [Pub.dev: kavach_flutter](https://pub.dev/packages/kavach_flutter) |
-| **🐍 Python** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-python) | [PyPI: rajeev02-kavach-sdk](https://pypi.org/project/rajeev02-kavach-sdk/) |
-| **🐹 Go** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-go) | [pkg.go.dev](https://pkg.go.dev/github.com/Rajeev02/kavachid/sdks/kavach-go) |
+## Documentation
+
+*   [Kavach Ecosystem Root](../../README.md)
+*   [pkg.go.dev Reference](https://pkg.go.dev/github.com/Rajeev02/kavachid/sdks/kavach-go)
+
+---
+
+## License
+
+Distributed under the MIT License. See `LICENSE` for more information.

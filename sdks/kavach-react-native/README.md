@@ -1,73 +1,113 @@
-<div align="center">
-  <h1>🛡️ @rajeev02/kavach-react-native</h1>
-  <p><b>Native React Native SDK for the Kavach Shield Engine</b></p>
-</div>
+# @rajeev02/kavach-react-native
+
+React Native (New Architecture) bindings for Kavach Shield Engine.
+
+[![Version](https://img.shields.io/badge/version-1.0.4-blue.svg)](https://www.npmjs.com/package/@rajeev02/kavach-react-native)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![Platform Support](https://img.shields.io/badge/platform-React%20Native-lightgrey.svg)]()
 
 ---
 
-**🔗 Source Code:** [Rajeev02/kavachid on GitHub](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-react-native)
+## TL;DR
 
+The React Native SDK provides ultra-fast JSI bindings to the native iOS and Android Kavach Shield Engine libraries.
 
-## 📖 Overview
-The official Kavach React Native SDK. Unlike standard web libraries that fail inside mobile WebViews, this SDK utilizes the **New Architecture (TurboModules & Fabric)** to bridge directly to native iOS `LocalAuthentication` and Android `BiometricPrompt`.
+**Who should use it:** Mobile engineers building cross-platform React Native apps who need hardware-backed biometrics and device fingerprinting.
 
-## ✨ Key Features
-*   **True Native Biometrics:** Directly triggers FaceID, TouchID, and Android Fingerprint via highly optimized C++ JSI bridges.
-*   **Secure Storage:** Automatically stores session tokens in the iOS Keychain and Android Keystore (backed by the hardware Trusted Execution Environment).
-*   **Jailbreak/Root Detection:** Built-in heuristics to detect compromised operating systems before allowing authentication.
-*   **Offline Mode Support:** Can validate cached biometric credentials even without network connectivity.
-
-## 🏆 Why Use This Library?
-*   **Uncompromising Security:** Avoids the vulnerabilities of storing tokens in standard `AsyncStorage`.
-*   **Native Performance:** JSI architecture means zero serialization overhead over the React Native bridge.
-*   **Graceful Fallbacks:** Automatically falls back to device PIN/Passcode if biometrics are unavailable or locked out.
-
-## 🚀 Installation
+**Quickest way to get started:**
 ```bash
 npm install @rajeev02/kavach-react-native
 cd ios && pod install
 ```
 
-## 💻 Detailed Usage
+---
 
-### 1. Initialization
-```typescript
-import { KavachNativeClient } from '@rajeev02/kavach-react-native';
+## Table of Contents
 
-const kavach = new KavachNativeClient({ 
-  serverUrl: 'https://api.yourdomain.com',
-  requireHardwareBacked: true // Enforces StrongBox/Secure Enclave
-});
+- [Overview](#overview)
+- [Features](#features)
+- [Compatibility Matrix](#compatibility-matrix)
+- [Quick Start](#quick-start)
+- [Usage](#usage)
+- [Troubleshooting](#troubleshooting)
+- [Documentation](#documentation)
+- [License](#license)
+
+*(For global architecture, CI/CD, and security guidelines, see the [Root README](../../README.md))*
+
+---
+
+## Overview
+
+**Technical Value:** Leverages React Native's New Architecture (JSI / TurboModules) for zero-latency execution of cryptographic functions and biometric scanning directly from the native thread.
+
+---
+
+## Features
+
+| Feature | Description | Status |
+| ------- | ----------- | ------ |
+| **TurboModules** | Synchronous JSI execution avoiding the RN Bridge. | Stable |
+| **Native Biometrics** | Triggers FaceID (iOS) and BiometricPrompt (Android). | Stable |
+| **Hardware Attestation** | Reads Secure Enclave / Keystore properties natively. | Stable |
+
+---
+
+## Compatibility Matrix
+
+| Component | Supported Version |
+| :--- | :--- |
+| **React Native** | 0.73.x+ (New Architecture enabled) |
+| **iOS** | iOS 13.0+ |
+| **Android** | Min SDK 24+ |
+
+---
+
+## Quick Start
+
+### Install
+```bash
+npm install @rajeev02/kavach-react-native
 ```
 
-### 2. Requesting Authentication
+### Configure
+Link the native dependencies (if not using autolinking):
+```bash
+cd ios && pod install
+```
+
+---
+
+## Usage
+
+### Basic Usage
 ```typescript
-async function authenticateUser() {
-  // Checks if FaceID/Fingerprint is enrolled on the device
-  const canAuthenticate = await kavach.isBiometryAvailable();
-  
-  if (canAuthenticate) {
-    try {
-      const session = await kavach.loginWithBiometrics('user@example.com', {
-         promptMessage: 'Log in to Kavach Secure App'
-      });
-      // Session is securely stored in Keychain/Keystore!
-    } catch (error) {
-      // Handle lockout, cancellation, or failure
-    }
+import { KavachRN } from '@rajeev02/kavach-react-native';
+
+async function authenticate() {
+  const result = await KavachRN.promptBiometrics("Confirm Payment");
+  if (result.success) {
+    // Proceed with payment
   }
 }
 ```
 
-## 🌐 The Kavach Ecosystem
-Kavach provides native SDKs for all major platforms:
+---
 
-| Platform | Source Code (GitHub) | Package Registry |
-| :--- | :--- | :--- |
-| **🌍 Web** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-web) | [NPM: @rajeev02/kavach-web](https://www.npmjs.com/package/@rajeev02/kavach-web) |
-| **📱 React Native** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-react-native) | [NPM: @rajeev02/kavach-react-native](https://www.npmjs.com/package/@rajeev02/kavach-react-native) |
-| **🍎 iOS (Swift)** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-ios) | [CocoaPods: KavachSDK](https://cocoapods.org/pods/KavachSDK) |
-| **🤖 Android (Kotlin)** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-android) | [Maven: io.github.rajeev02.kavach](https://central.sonatype.com/artifact/io.github.rajeev02.kavach/kavach-android) |
-| **🐦 Flutter** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-flutter) | [Pub.dev: kavach_flutter](https://pub.dev/packages/kavach_flutter) |
-| **🐍 Python** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-python) | [PyPI: rajeev02-kavach-sdk](https://pypi.org/project/rajeev02-kavach-sdk/) |
-| **🐹 Go** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-go) | [pkg.go.dev](https://pkg.go.dev/github.com/Rajeev02/kavachid/sdks/kavach-go) |
+## Troubleshooting
+
+*   **Build Failures (iOS):** Ensure `pod install` succeeded and that you are opening the `.xcworkspace` (not the `.xcodeproj`).
+*   **Build Failures (Android):** Ensure you are using Gradle 8.0+ and JDK 17.
+
+---
+
+## Documentation
+
+*   [Kavach Ecosystem Root](../../README.md)
+*   [React Native Sample](../../samples/kavach-react-native)
+
+---
+
+## License
+
+Distributed under the MIT License. See `LICENSE` for more information.

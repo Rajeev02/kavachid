@@ -1,80 +1,104 @@
-<div align="center">
-  <h1>🛡️ KavachSDK (Android)</h1>
-  <p><b>Native Kotlin SDK for the Kavach Shield Engine</b></p>
-</div>
+# Kavach SDK (Android)
+
+Native Kotlin Android SDK for the Kavach Shield Engine.
+
+[![Version](https://img.shields.io/badge/version-1.0.4-blue.svg)](https://central.sonatype.com/artifact/io.github.rajeev02.kavach/kavach-android)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![Platform Support](https://img.shields.io/badge/platform-Android-lightgrey.svg)]()
 
 ---
 
-**🔗 Source Code:** [Rajeev02/kavachid on GitHub](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-android)
+## TL;DR
 
+A pure Kotlin implementation of the Kavach Engine utilizing AndroidX Biometrics.
 
-## 📖 Overview
-The official Kavach Android SDK. Built from the ground up using modern Kotlin Coroutines and Flows, it interacts directly with AndroidX `BiometricPrompt` and the Android Keystore system.
+**Who should use it:** Android Engineers building native Kotlin/Compose applications.
 
-## ✨ Key Features
-*   **StrongBox TEE Backed:** Cryptographic keys are stored in the Trusted Execution Environment (TEE) or StrongBox, providing bank-grade security.
-*   **Unified Biometric API:** Handles the fragmentation of Android hardware natively—whether it's an ultrasonic fingerprint reader, optical scanner, or 3D facial recognition.
-*   **Coroutines Support:** Fully asynchronous, non-blocking API designed for modern Android architecture components.
-*   **Encrypted SharedPreferences:** Token storage is automatically encrypted using AES-256-GCM.
+**Quickest way to get started:** Add the Maven Central dependency to `build.gradle.kts`.
 
-## 🏆 Why Use This Library?
-*   **Fixes Android Fragmentation:** You don't have to worry about the differences between Samsung, Pixel, and Xiaomi biometric APIs. Kavach handles it all.
-*   **Lifecycle Aware:** The SDK respects Android Activity lifecycles, ensuring biometrics aren't triggered when the app is in the background.
-*   **Modern Kotlin:** No legacy Java callbacks. Clean, idiomatic Kotlin code.
+---
 
-## 🚀 Installation (Maven Central)
+## Table of Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Compatibility Matrix](#compatibility-matrix)
+- [Quick Start](#quick-start)
+- [Usage](#usage)
+- [Troubleshooting](#troubleshooting)
+- [Documentation](#documentation)
+- [License](#license)
+
+*(For global architecture, CI/CD, and security guidelines, see the [Root README](../../README.md))*
+
+---
+
+## Overview
+
+**Technical Value:** Leverages AndroidX BiometricPrompt and the Android Keystore system to securely generate cryptographic keys backed by the Trusted Execution Environment (TEE).
+
+---
+
+## Features
+
+| Feature | Description | Status |
+| ------- | ----------- | ------ |
+| **BiometricPrompt** | Unified interface for Fingerprint and Face Unlock. | Stable |
+| **Keystore Enclave** | Hardware-backed cryptographic operations. | Stable |
+
+---
+
+## Compatibility Matrix
+
+| Component | Supported Version |
+| :--- | :--- |
+| **Kotlin** | 1.9+ |
+| **Android** | API 24+ (Android 7.0+) |
+
+---
+
+## Quick Start
+
+### Install
 Add to your `build.gradle.kts`:
 ```kotlin
-implementation("io.github.rajeev02.kavach:kavach-sdk:1.0.1")
+dependencies {
+    implementation("io.github.rajeev02.kavach:kavach-android:1.0.4")
+}
 ```
 
-## 💻 Detailed Usage
+---
 
-### 1. Setup in Activity/Fragment
+## Usage
+
+### Basic Usage
 ```kotlin
 import com.kavach.sdk.KavachClient
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.launch
 
-class LoginActivity : AppCompatActivity() {
-    private val kavach = KavachClient("https://api.yourdomain.com")
+val kavach = KavachClient(context)
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        
-        findViewById<Button>(R.id.loginBtn).setOnClickListener {
-            performBiometricLogin()
-        }
-    }
-
-    private fun performBiometricLogin() {
-        lifecycleScope.launch {
-            try {
-                // Suspends until the user scans their fingerprint
-                val session = kavach.loginWithBiometrics(
-                    activity = this@LoginActivity, 
-                    email = "user@example.com",
-                    title = "Sign In",
-                    subtitle = "Confirm your fingerprint to continue"
-                )
-                // Navigation to home screen
-            } catch (e: KavachAuthException) {
-                // Handle lockout or hardware errors
-            }
-        }
+kavach.authenticate("Confirm Transfer") { result ->
+    if (result.isSuccess) {
+        // Proceed
     }
 }
 ```
 
-## 🌐 The Kavach Ecosystem
-Kavach provides native SDKs for all major platforms:
+---
 
-| Platform | Source Code (GitHub) | Package Registry |
-| :--- | :--- | :--- |
-| **🌍 Web** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-web) | [NPM: @rajeev02/kavach-web](https://www.npmjs.com/package/@rajeev02/kavach-web) |
-| **📱 React Native** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-react-native) | [NPM: @rajeev02/kavach-react-native](https://www.npmjs.com/package/@rajeev02/kavach-react-native) |
-| **🍎 iOS (Swift)** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-ios) | [CocoaPods: KavachSDK](https://cocoapods.org/pods/KavachSDK) |
-| **🤖 Android (Kotlin)** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-android) | [Maven: io.github.rajeev02.kavach](https://central.sonatype.com/artifact/io.github.rajeev02.kavach/kavach-android) |
-| **🐦 Flutter** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-flutter) | [Pub.dev: kavach_flutter](https://pub.dev/packages/kavach_flutter) |
-| **🐍 Python** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-python) | [PyPI: rajeev02-kavach-sdk](https://pypi.org/project/rajeev02-kavach-sdk/) |
-| **🐹 Go** | [Source Code](https://github.com/Rajeev02/kavachid/tree/main/sdks/kavach-go) | [pkg.go.dev](https://pkg.go.dev/github.com/Rajeev02/kavachid/sdks/kavach-go) |
+## Troubleshooting
+
+*   **No Biometrics Configured:** Ensure you handle the `BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED` error gracefully if the user has no PIN or Fingerprint set up.
+
+---
+
+## Documentation
+
+*   [Kavach Ecosystem Root](../../README.md)
+*   [Android Sample](../../samples/kavach-android)
+
+---
+
+## License
+
+Distributed under the MIT License. See `LICENSE` for more information.
