@@ -1,0 +1,6 @@
+apiVersion: v2
+name: kavachid
+description: A Helm chart for deploying KavachID Next-Gen IAM
+type: application
+version: 1.0.0
+appVersion: "1.0.0"

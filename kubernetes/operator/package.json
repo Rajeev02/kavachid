@@ -1,0 +1,20 @@
+{
+  "name": "kavachid-operator",
+  "version": "1.0.0",
+  "description": "Kubernetes Operator for provisioning KavachID tenants",
+  "main": "dist/operator.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "ts-node src/operator.ts"
+  },
+  "dependencies": {
+    "@kubernetes/client-node": "^0.20.0",
+    "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/pg": "^8.11.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.3.0"
+  }
+}

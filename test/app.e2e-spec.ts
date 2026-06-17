@@ -120,6 +120,19 @@ describe('AppController (e2e)', () => {
           expect(res.body.keys).toBeDefined();
         });
     });
+
+    it('GET /.well-known/openid-configuration - should serve OpenID Connect provider configuration discovery metadata', () => {
+      return request(app.getHttpServer())
+        .get('/.well-known/openid-configuration')
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.issuer).toBeDefined();
+          expect(res.body.jwks_uri).toBeDefined();
+          expect(res.body.token_endpoint).toBeDefined();
+          expect(res.body.scopes_supported).toContain('openid');
+          expect(res.body.dpop_signing_alg_values_supported).toContain('ES256');
+        });
+    });
   });
 
   describe('Auth Session Lifecycle & DPoP (e2e)', () => {

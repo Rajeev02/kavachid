@@ -1,0 +1,42 @@
+replicaCount: 1
+
+image:
+  repository: kavachid
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+service:
+  type: ClusterIP
+  port: 3000
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: kavachid.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+config:
+  masterKey: "default-kavachid-master-key-must-change-32bytes"
+  webhookUrl: "http://webhook-listener:8080/events"
+  jwtAccessExpiresIn: "15m"
+  jwtRefreshExpiresIn: "7d"
+
+database:
+  url: "postgresql://kavach:supersecretpassword@postgres-service:5432/kavachid?schema=public"
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

@@ -41,6 +41,26 @@ export class AuthGuard implements CanActivate {
         issuer: 'https://kavachid.local',
       });
 
+      // Strict FAPI 2.0 / RFC 9449 check: If token is DPoP-bound, verify the DPoP signature proof
+      const cnf = (payload as any).cnf;
+      if (cnf?.jkt) {
+        const dpopHeader = request.headers['dpop'] as string;
+        if (!dpopHeader) {
+          throw new UnauthorizedException('Missing required dpop header for DPoP-bound token');
+        }
+
+        const protocol = request.secure ? 'https' : 'http';
+        // Construct the expected full HTTP URL for DPoP verification
+        const dpopUrl = `${protocol}://${request.headers.host}${request.originalUrl}`;
+        const dpopMethod = request.method;
+
+        const { jkt } = await this.crypto.verifyDpop(dpopHeader, dpopMethod, dpopUrl);
+
+        if (cnf.jkt !== jkt) {
+          throw new UnauthorizedException('DPoP thumbprint mismatch (token binding validation failed)');
+        }
+      }
+
       // Bind the validated user payload to the request object
       request.user = {
         sub: payload.sub,

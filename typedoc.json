@@ -1,0 +1,13 @@
+{
+  "entryPoints": ["src/index.ts", "kavach-sdk/src/index.ts"],
+  "out": "docs/api",
+  "name": "KavachID Code API Documentation",
+  "includeVersion": true,
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "excludeInternal": true,
+  "skipErrorChecking": true,
+  "validation": {
+    "notExported": false
+  }
+}
