@@ -30,6 +30,12 @@ graph TD;
 ### What You Can Configure
 Through the `admin-console`, businesses can override the default strictness. For example, you can set `Kavach Store` to bypass strict VPN checks for "Browsing Catalog" actions, reducing friction for new shoppers.
 
+### Deployment Models (SaaS vs Self-Hosted)
+**Do developers need to deploy this server themselves?** No! 
+*   **Kavach Cloud (SaaS):** Developers can simply sign up for a Kavach Tenant, install the SDK, and point it to the Kavach Cloud API. No server deployment required!
+*   **Self-Hosted:** For strict data compliance, enterprises can deploy the Kavach `src/` backend in their own Kubernetes cluster or AWS environment using the provided Docker configuration.
+*   **Local Device Execution:** The frontend Kavach SDK handles all biometric prompts (FaceID/TouchID), WebAuthn, and Device Fingerprinting 100% locally on the mobile device or web browser before securely transmitting the telemetry.
+
 ---
 
 ## 📁 Repository Navigation
@@ -51,10 +57,23 @@ We provide boilerplate implementations to demonstrate how to use Kavach across a
 
 *   **[`samples/kavach-react`](./samples/kavach-react):** Integrating the SDK into a React web app.
 *   **[`samples/kavach-react-native`](./samples/kavach-react-native):** Mobile authentication and native biometrics.
-*   **[`samples/kavach-ios`](./samples/kavach-ios):** Native Swift implementations passing telemetry headers.
+*   **[`samples/kavach-ios`](./samples/kavach-ios):** Native Swift implementations.
 *   **[`samples/kavach-android`](./samples/kavach-android):** Native Kotlin examples.
 *   **[`samples/kavach-flutter`](./samples/kavach-flutter):** Cross-platform Dart implementation.
 *   **[`samples/kavach-express`](./samples/kavach-express):** Protecting backend Node.js APIs using the SDK's Express Middleware.
+
+### How to Run & Test the Samples
+To test the "Invisible Security" and KSE biometric step-ups locally:
+
+1. Ensure the Kavach Backend is running (see Local Setup below).
+2. Navigate to your desired sample (e.g., React):
+   ```bash
+   cd samples/kavach-react
+   npm install
+   npm run start
+   ```
+3. Open the app in your browser/emulator.
+4. **Test the feature:** Try clicking a "View Catalog" button (Level 1) — it will succeed silently. Then click "Transfer $500" (Level 3). The KSE engine on the backend will return a `401 STEP_UP_REQUIRED`, and the frontend SDK will automatically pop up your device's biometric scanner (TouchID/FaceID) to authorize the transaction!
 
 ---
 

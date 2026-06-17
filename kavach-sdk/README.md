@@ -12,6 +12,12 @@ Kavach operates on a zero-trust model powered by the **Kavach Shield Engine (KSE
 - **What you can disable/configure:** You can lower security levels for specific benign actions (e.g., viewing a catalog) via the Admin Console. 
 - **What KSE provides:** KSE silently scores all traffic. If a user performs a high-risk action (Level 3+) or exhibits risky behavior, the SDK will automatically throw a `401 STEP_UP_REQUIRED` demanding Biometrics or OTP.
 
+## ☁️ Deployment & Local Execution
+**Do I need to deploy my own Kavach server to use this SDK?**
+No! 
+*   **Cloud Hosted:** You can simply point the `serverUrl` in the SDK to the Kavach Cloud SaaS API.
+*   **Local Execution:** The SDK executes Device Fingerprinting, Passkey generation, and Biometric Step-Ups (FaceID/TouchID) entirely locally on the user's Mobile or Web device. The backend is only contacted to cryptographically verify these local actions.
+
 ---
 
 ## 🚀 Installation
