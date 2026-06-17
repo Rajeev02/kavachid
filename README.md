@@ -1,98 +1,150 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# KavachID 🛡️
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+**KavachID** is a next-generation, 100% open-source Identity & Access Management (IAM) operating system and trust infrastructure. Built with NestJS, Prisma 7, and PostgreSQL, it is designed from the ground up to provide state-of-the-art security, multi-tenant isolation, Zero Trust device binding, and high-performance token authorization.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+---
 
-## Description
+## 🚀 Key Features Implemented (Phases 1-6)
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+### 1. Multi-Tenant Isolated User Management
+* **Tenant Isolation**: Secure context isolation using custom headers (`x-tenant-id`) and isolated schemas.
+* **Modern Cryptography**: Argon2id password hashing executed asynchronously via a worker-thread pool protecting the main Node.js event loop.
+* **Just-in-Time (JIT) Legacy Migration**: Lazy migration workflows allowing seamless legacy system upgrades via secure webhook-based verification.
 
-## Project setup
+### 2. High-Security Token Session Lifecycle
+* **DPoP (RFC 9449)**: Demonstating Proof-of-Possession binding at the protocol level. Access tokens are bound to client-specific cryptographic key thumbprints (`cnf.jkt`) to prevent token theft and replay attacks.
+* **Refresh Token Rotation (RTR)**: Cryptographically rotates refresh tokens on every usage, invalidating the previous version.
+* **Hijack/Replay Detection**: Instant detection of refresh token reuse trigger invalidation of all active sessions for the compromised user.
+* **Active Session Management**: Discover active sessions and revoke tokens on-demand.
 
-```bash
-$ npm install
+### 3. Key Rotation & Public JWKS
+* **Private Key Security**: RSA private keys are encrypted at rest using symmetric AES-256-GCM.
+* **Automatic Key Rotation**: Key rotation cycle generating new keys and updating status flags dynamically.
+* **JWKS Endpoints**: Exposes OpenID-compliant JSON Web Key Sets (`/oauth/jwks` and `/.well-known/jwks.json`) for public verification.
+
+### 4. Tenant-Isolated Authorization Engine (RBAC)
+* **Dynamic Access Control**: Manage hierarchical Roles, Permissions, Role-Permission mappings, and User-Role assignments.
+* **Global Security Guards**: Global NestJS authentication (`AuthGuard`) and permission guards (`PermissionsGuard`) secure endpoints using decorator metadata.
+
+### 5. Observability, Security Audit Logs & Webhooks
+* **Automated Audit Logs**: A global `AuditLogInterceptor` intercepts requests to annotated route handlers, automatically recording actions, actors, and resource IDs inside database audit tables.
+* **Metadata Sanitization**: Automatically removes sensitive information (passwords, tokens, secrets) before persisting audit metadata.
+* **Transactional Outbox & Webhooks**: Uses the Transactional Outbox Pattern to publish event webhooks to external listeners (`process.env.WEBHOOK_URL`) via Axios.
+* **Exponential Backoff Retries**: Failed webhook notifications automatically retry with exponential backoff ($2^{\text{retryCount}}$ seconds) up to 5 times.
+
+---
+
+## 🛠️ Tech Stack & Dependencies
+
+* **Core Framework**: NestJS 11
+* **Database Interface**: Prisma 7 + PostgreSQL 16
+* **Database Driver Adapter**: `@prisma/adapter-pg` + `pg` (required for Prisma 7 compatibility)
+* **Password Hashing**: `argon2` (using multi-threaded worker pools)
+* **JWT / Cryptography**: `jose` (ESM native, fully transformed for Jest)
+* **HTTP Client**: `axios`
+
+---
+
+## 📂 Project Architecture
+
+```text
+src/
+├── app.controller.ts
+├── app.module.ts
+├── main.ts
+└── modules/
+    ├── audit-log/       # Audit Decorator, Service, & Interceptor
+    ├── auth/            # Auth Guard, Permissions Decorator, & Permissions Guard
+    ├── crypto/          # Argon2 worker threads, AES-256-GCM, & JWT utils
+    ├── database/        # Prisma Client & PostgreSQL driver adapter
+    ├── keypair/         # RSA Key generation, rotation, & JWKS endpoints
+    ├── outbox/          # Webhook dispatcher & retry poller
+    ├── role/            # Roles & Permissions administration controllers/services
+    ├── session/         # Login, DPoP binding, RTR, reuse check, & logout
+    ├── tenant/          # Multi-tenant context and guards
+    └── user/            # Registration & credentials verification
 ```
 
-## Compile and run the project
+---
 
+## 🏃 Getting Started
+
+### 1. Project Setup
 ```bash
-# development
-$ npm run start
+# Clone the repository
+git clone https://github.com/Rajeev02/kavachid.git
+cd kavachid
 
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+# Install dependencies
+npm install
 ```
 
-## Run tests
-
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+### 2. Configure Environment Variables
+Create a `.env` file in the root directory:
+```env
+DATABASE_URL="postgresql://username:password@localhost:5432/kavachid?schema=public"
+KAVACHID_MASTER_KEY="your-32-byte-hex-encoded-master-encryption-key"
+WEBHOOK_URL="http://localhost:3000/webhook"
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
+### 3. Run Schema Migrations
+Deploy the multi-tenant Prisma schema to your local PostgreSQL instance:
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npx prisma db push
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### 4. Start the Application
+```bash
+# Development mode
+npm run start:dev
 
-## Resources
+# Production mode
+npm run start:prod
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+### 5. Running Tests
+```bash
+# Unit & integration tests
+npm run test
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+# End-to-End integration tests
+npm run test:e2e
+```
 
-## Support
+---
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## 🗺️ Remaining Project Phases
 
-## Stay in touch
+Based on the core vision of KavachID, the remaining implementation milestones are:
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+* **Phase 5: Admin Console (UI)**: A React-based web control plane for managing tenants, viewing security audit logs, monitoring session metrics, managing users, and rotating signing keys manually.
+* **Phase 6: Unified SDK Platform**: Client libraries for frontend and backend integration.
+* **Phase 7: Infrastructure & Kubernetes Operator**: Docker Compose configs, Helm Charts, and a Kubernetes Operator for zero-downtime, self-hosted deployment.
+* **Phase 8: OIDC Conformance & Compliance**: Validating compliance against the FAPI 2.0 security standards and executing automated cryptographic stress-testing.
+* **Phase 9: Documentation & Community Portal**: Comprehensive developer documentation, RFC processes, and ADR guidelines.
 
-## License
+---
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+## 📦 Publishing Client SDK Libraries
+
+Yes! The core authentication and authorization services of KavachID can be easily consumed by publishing client-side SDK libraries. Since KavachID is API-first, standard client SDKs can be distributed across package registries:
+
+* **Node.js/React/Next.js/React Native**: Published via **npm** under `@kavachid/react`, `@kavachid/react-native`, or `@kavachid/node`.
+* **Flutter**: Published via **pub.dev** as `kavachid_flutter`.
+* **Android (Native)**: Published via **Maven Central** as `kavachid-android`.
+* **iOS (Native)**: Distributed via **CocoaPods** or **Swift Package Manager (SPM)** as `kavachid-ios`.
+
+### How Client SDKs Function Internally:
+1. **PKCE & Authorization Code Flow**: The SDKs automate the generation of cryptographically secure `code_verifier` and `code_challenge` parameters (RFC 7636) to prevent authorization code interception.
+2. **Client-Side DPoP Signing**: 
+   * **Web/React/Next.js**: Uses the Web Crypto API to generate ephemeral keys and sign DPoP headers.
+   * **React Native**: Uses `react-native-keychain` and secure enclave interfaces to sign headers.
+   * **Flutter/iOS/Android**: Uses native keychains (Android Keystore / iOS Keychain) to bind the token cryptographically to device hardware.
+3. **Session State & Refresh Handlers**: Automatically listens for token expiration and triggers background refresh calls (RTR) to fetch updated access tokens without interrupting the user.
+4. **Backend SDK Verification**: Backend SDKs (like `@kavachid/node` or Go/Python SDKs) pull public keys from the server's `/oauth/jwks` endpoint and verify incoming access tokens locally (sub-millisecond speed) without requiring database lookups or API calls to the KavachID server.
+
+---
+
+## 📄 License
+
+KavachID is distributed under the **Apache 2.0** License. It is 100% open-source with no feature-locking or hidden commercial dependencies.
