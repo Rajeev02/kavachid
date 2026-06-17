@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kavach Store - Merchant Portal</title>
+  <link rel="stylesheet" href="../../shared/styles.css">
+</head>
+<body>
+  <header>
+    <h1>🛡️ <span class="app-name">Kavach Store</span></h1>
+    <div class="nav-links">
+      <span class="badge">Business</span>
+      <button class="btn btn-secondary" id="logout-btn" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Log Out</button>
+    </div>
+  </header>
+
+  <main class="main-container">
+    <div id="auth-view"></div>
+
+    <div id="dashboard-view" style="display: none;">
+      <!-- Merchant stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Store Gross Sales</div>
+          <div class="stat-value success-text">$84,120.50</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Refund Requests</div>
+          <div class="stat-value" style="color: var(--danger-color);">2 Pending</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Active Buyers</div>
+          <div class="stat-value">1,240</div>
+        </div>
+      </div>
+
+      <div class="dashboard-grid">
+        <!-- Main Panel -->
+        <div class="card">
+          <div class="card-header">
+            <h3>Sales Order Log</h3>
+          </div>
+          <table id="orders-table">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Items</th>
+                <th>Total</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>#ORD-9021</strong></td>
+                <td>alice@domain.com</td>
+                <td>1x Keyboard, 1x Mouse</td>
+                <td>$125.00</td>
+                <td><button class="btn btn-danger btn-refund" data-order="9021" data-amount="125.00">Refund</button></td>
+              </tr>
+              <tr>
+                <td><strong>#ORD-8942</strong></td>
+                <td>bob@domain.com</td>
+                <td>2x Charging Cable</td>
+                <td>$30.00</td>
+                <td><button class="btn btn-danger btn-refund" data-order="8942" data-amount="30.00">Refund</button></td>
+              </tr>
+              <tr>
+                <td><strong>#ORD-8812</strong></td>
+                <td>charlie@domain.com</td>
+                <td>1x USB-C Multi Hub</td>
+                <td>$85.00</td>
+                <td><button class="btn btn-danger btn-refund" data-order="8812" data-amount="85.00">Refund</button></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div id="refund-status" style="margin-top: 1.5rem; display: none;" class="card"></div>
+        </div>
+
+        <!-- Sidebar Sessions -->
+        <div class="card">
+          <div class="card-header">
+            <h3>Active Security Sessions</h3>
+          </div>
+          <div id="sessions-list">
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Loading active sessions...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

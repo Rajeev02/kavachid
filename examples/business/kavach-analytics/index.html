@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kavach Analytics - Metrics Viewer</title>
+  <link rel="stylesheet" href="../../shared/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <header>
+    <h1>🛡️ <span class="app-name">Kavach Analytics</span></h1>
+    <div class="nav-links">
+      <span class="badge">Business</span>
+      <button class="btn btn-secondary" id="logout-btn" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Log Out</button>
+    </div>
+  </header>
+
+  <main class="main-container">
+    <div id="auth-view"></div>
+
+    <div id="dashboard-view" style="display: none;">
+      <!-- Stats row -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Total Authenticated Traffic</div>
+          <div class="stat-value">84,120 Requests</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Avg verification Time</div>
+          <div class="stat-value success-text">0.05ms</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Token Hijack Mitigations</div>
+          <div class="stat-value" style="color: var(--success-color);">0 Active</div>
+        </div>
+      </div>
+
+      <div class="dashboard-grid" style="grid-template-columns: 1fr;">
+        <!-- Analytics Chart -->
+        <div class="card" style="margin-bottom: 2rem;">
+          <div class="card-header">
+            <h3>Hourly Authenticaton Load (OIDC & DPoP Tokens)</h3>
+            <button class="btn btn-secondary" id="refresh-chart-btn" style="padding: 0.25rem 0.75rem; font-size: 0.75rem;">Refresh</button>
+          </div>
+          <div style="height: 300px; position: relative;">
+            <canvas id="analytics-canvas"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="dashboard-grid">
+        <!-- Main Panel -->
+        <div class="card">
+          <div class="card-header">
+            <h3>Recent Authentication Events Log</h3>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Event Type</th>
+                <th>Identity</th>
+                <th>Client Platform</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="events-log-body">
+              <tr>
+                <td><strong>auth.login</strong></td>
+                <td>admin@kavachid.local</td>
+                <td>Web Browser (Chrome)</td>
+                <td><span class="badge" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); color: var(--success-color);">Success</span></td>
+              </tr>
+              <tr>
+                <td><strong>auth.refresh</strong></td>
+                <td>user@kavachid.local</td>
+                <td>React Native Client</td>
+                <td><span class="badge" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); color: var(--success-color);">Success</span></td>
+              </tr>
+              <tr>
+                <td><strong>user.register</strong></td>
+                <td>customer@gmail.com</td>
+                <td>Flutter Client</td>
+                <td><span class="badge" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); color: var(--success-color);">Success</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Sidebar Sessions -->
+        <div class="card">
+          <div class="card-header">
+            <h3>Active Security Sessions</h3>
+          </div>
+          <div id="sessions-list">
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Loading active sessions...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

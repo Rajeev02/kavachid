@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kavach Travel - Flight Bookings</title>
+  <link rel="stylesheet" href="../../shared/styles.css">
+</head>
+<body>
+  <header>
+    <h1>🛡️ <span class="app-name">Kavach Travel</span></h1>
+    <div class="nav-links">
+      <span class="badge">Consumer</span>
+      <button class="btn btn-secondary" id="logout-btn" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Log Out</button>
+    </div>
+  </header>
+
+  <main class="main-container">
+    <div id="auth-view"></div>
+
+    <div id="dashboard-view" style="display: none;">
+      <!-- Search Widgets -->
+      <div class="card" style="margin-bottom: 2rem;">
+        <div class="card-header">
+          <h3>Search Available Flights</h3>
+        </div>
+        <form id="search-form" style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 1rem; align-items: end;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="from">From</label>
+            <input type="text" id="from" value="London (LHR)" placeholder="Departure City">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="to">To</label>
+            <input type="text" id="to" value="New York (JFK)" placeholder="Arrival City">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="date">Departure Date</label>
+            <input type="date" id="date" value="2026-07-01">
+          </div>
+          <button type="submit" class="btn" style="height: 42px;">Search</button>
+        </form>
+      </div>
+
+      <div class="dashboard-grid">
+        <!-- Flight Results -->
+        <div class="card">
+          <div class="card-header">
+            <h3>Available Flight Deals</h3>
+          </div>
+          <table id="flights-table">
+            <thead>
+              <tr>
+                <th>Airline</th>
+                <th>Route</th>
+                <th>Time</th>
+                <th>Price</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>British Airways</strong></td>
+                <td>LHR ➔ JFK</td>
+                <td>08:30 - 11:45</td>
+                <td class="success-text" style="font-weight: 600;">$540.00</td>
+                <td><button class="btn btn-book" data-price="540.00" data-airline="British Airways">Book Deal</button></td>
+              </tr>
+              <tr>
+                <td><strong>Delta Air Lines</strong></td>
+                <td>LHR ➔ JFK</td>
+                <td>12:15 - 15:30</td>
+                <td class="success-text" style="font-weight: 600;">$490.00</td>
+                <td><button class="btn btn-book" data-price="490.00" data-airline="Delta Air Lines">Book Deal</button></td>
+              </tr>
+              <tr>
+                <td><strong>Virgin Atlantic</strong></td>
+                <td>LHR ➔ JFK</td>
+                <td>16:00 - 19:20</td>
+                <td class="success-text" style="font-weight: 600;">$610.00</td>
+                <td><button class="btn btn-book" data-price="610.00" data-airline="Virgin Atlantic">Book Deal</button></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div id="booking-status" style="margin-top: 1.5rem; display: none;" class="card"></div>
+        </div>
+
+        <!-- Sidebar Sessions -->
+        <div class="card">
+          <div class="card-header">
+            <h3>Active Security Sessions</h3>
+          </div>
+          <div id="sessions-list">
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Loading active sessions...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
