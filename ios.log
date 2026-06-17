@@ -1,0 +1,15 @@
+    [33mWARNING: CocoaPods requires your terminal to be using UTF-8 encoding.
+    Consider adding the following to ~/.profile:
+
+    export LANG=en_US.UTF-8
+    [0m
+Updating spec repo `trunk`
+Validating podspec
+ -> KavachSDK -> KavachSDK (1.0.3)
+    - ERROR | [iOS] unknown: Encountered an unknown error ([!] /usr/bin/git clone https://github.com/Rajeev02/kavachid.git /var/folders/9j/8gzv1kwn1rv0cl3ccnq_sm980000gn/T/d20260618-11008-gu4mej --template= --single-branch --depth 1 --branch ios-v1.0.3
+
+Cloning into '/var/folders/9j/8gzv1kwn1rv0cl3ccnq_sm980000gn/T/d20260618-11008-gu4mej'...
+fatal: Remote branch ios-v1.0.3 not found in upstream origin
+) during validation.
+
+[!] The spec did not pass validation, due to 1 error.

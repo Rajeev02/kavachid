@@ -1,0 +1,78 @@
+🚀 Starting Kavach Ecosystem NPM Publishing...
+-----------------------------------
+📦 Building & Publishing @rajeev02/kavach-web...
+
+> @rajeev02/kavach-web@1.0.3 build
+> tsc
+
+npm warn publish npm auto-corrected some errors in your package.json when publishing.  Please run "npm pkg fix" to address these errors.
+npm warn publish errors corrected:
+npm warn publish "repository.url" was normalized to "git+https://github.com/Rajeev02/kavachid.git"
+npm notice
+npm notice package: @rajeev02/kavach-web@1.0.3
+npm notice Tarball Contents
+npm notice 3.9kB README.md
+npm notice 353B dist/dpop.d.ts
+npm notice 3.2kB dist/dpop.js
+npm notice 548B dist/express.d.ts
+npm notice 2.0kB dist/express.js
+npm notice 2.2kB dist/index.d.ts
+npm notice 12.4kB dist/index.js
+npm notice 1.0kB dist/kse.d.ts
+npm notice 1.9kB dist/kse.js
+npm notice 301B dist/pkce.d.ts
+npm notice 1.5kB dist/pkce.js
+npm notice 629B dist/storage.d.ts
+npm notice 792B dist/storage.js
+npm notice 1.1kB package.json
+npm notice Tarball Details
+npm notice name: @rajeev02/kavach-web
+npm notice version: 1.0.3
+npm notice filename: rajeev02-kavach-web-1.0.3.tgz
+npm notice package size: 8.2 kB
+npm notice unpacked size: 31.7 kB
+npm notice shasum: aa217f0daa2a3f3ce04debfed8e14813f079c1f6
+npm notice integrity: sha512-13eV8vAVVWDv5[...]dDZT0u7eh+5TA==
+npm notice total files: 14
+npm notice
+npm notice Publishing to https://registry.npmjs.org/ with tag latest and public access
+npm error code EOTP
+npm error This operation requires a one-time password.
+npm error Open this URL in your browser to authenticate:
+npm error   https://www.npmjs.com/auth/cli/***
+npm error
+npm error After authenticating, your token can be retrieved from:
+npm error   https://registry.npmjs.org/-/v1/done?authId=***
+npm error A complete log of this run can be found in: /Users/rajeevjoshi/.npm/_logs/2026-06-17T20_10_43_306Z-debug-0.log
+⚠️ Version already published to NPM, skipping...
+-----------------------------------
+📦 Building & Publishing @rajeev02/kavach-react-native...
+npm notice
+npm notice package: @rajeev02/kavach-react-native@1.0.3
+npm notice Tarball Contents
+npm notice 3.8kB README.md
+npm notice 207B package.json
+npm notice 28B src/index.ts
+npm notice Tarball Details
+npm notice name: @rajeev02/kavach-react-native
+npm notice version: 1.0.3
+npm notice filename: rajeev02-kavach-react-native-1.0.3.tgz
+npm notice package size: 1.9 kB
+npm notice unpacked size: 4.1 kB
+npm notice shasum: 9e18521a26f2b503d6d6ccd81259a96fecf8ed61
+npm notice integrity: sha512-cCqFgIoOgTjH0[...]iyxSs1hdmclfA==
+npm notice total files: 3
+npm notice
+npm notice Publishing to https://registry.npmjs.org/ with tag latest and public access
+npm error code EOTP
+npm error This operation requires a one-time password.
+npm error Open this URL in your browser to authenticate:
+npm error   https://www.npmjs.com/auth/cli/***
+npm error
+npm error After authenticating, your token can be retrieved from:
+npm error   https://registry.npmjs.org/-/v1/done?authId=***
+npm error A complete log of this run can be found in: /Users/rajeevjoshi/.npm/_logs/2026-06-17T20_10_45_590Z-debug-0.log
+⚠️ Version already published to NPM, skipping...
+-----------------------------------
+✅ Kavach NPM Packages (Web & React Native) published successfully!
+Note: iOS, Android, Flutter, Python, and Go SDKs must be published to their respective native registries (Cocoapods, Maven, Pub.dev, PyPI).

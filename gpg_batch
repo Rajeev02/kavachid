@@ -1,0 +1,9 @@
+%echo Generating a standard key
+Key-Type: RSA
+Key-Length: 4096
+Name-Real: Rajeev
+Name-Email: rajeev@kavach.id
+Expire-Date: 0
+Passphrase: kavachsecurepassword
+%commit
+%echo done
