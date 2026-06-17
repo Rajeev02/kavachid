@@ -1,6 +1,6 @@
 {
   "name": "@kavachid/react-native",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "KavachID react-native library. Next-generation IAM and trust infrastructure.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
