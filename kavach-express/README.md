@@ -1,4 +1,4 @@
-# @kavachid/express 🛡️
+# @kavachid/express <img src="https://raw.githubusercontent.com/Rajeev02/kavachid/main/assets/logo-icon-only.png" width="24" height="24" alt="KavachID Shield" style="vertical-align: middle;" />
 
 **Express Authentication Middleware** for KavachID - next-generation, DPoP-bound, multi-tenant Identity & Access Management.
 
@@ -65,3 +65,26 @@ app.listen(3001, () => {
 * **Node.js:** Requires Node.js v18.0.0+ (ESM or CommonJS).
 * **Express Framework:** Compatible with Express 4.x and Express 5.x.
 * **Typings:** Built-in TypeScript support with extended `AuthenticatedRequest` context interfaces.
+
+
+## Getting Started
+
+### 1. Setup the Core Infrastructure
+Before using this middleware/library, ensure your primary PostgreSQL database and Redis (if using caching/throttling) are running.
+
+### 2. Install and Import
+Install the library via npm, yarn, or pnpm. Then import it into your NestJS, Express, or other Node.js application.
+
+### 3. Configure Middleware/Guards
+Apply the provided middleware to protect your routes.
+
+```typescript
+// Example usage:
+import { KavachMiddleware } from '@kavachid/express';
+
+app.use('/protected', KavachMiddleware({
+  jwksUri: 'http://localhost:3000/.well-known/jwks.json',
+  audience: 'your-api-audience',
+  issuer: 'http://localhost:3000'
+}));
+```

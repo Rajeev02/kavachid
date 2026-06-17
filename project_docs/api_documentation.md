@@ -1,4 +1,4 @@
-# KavachID API Specification 🛡️
+# KavachID API Specification <img src="https://raw.githubusercontent.com/Rajeev02/kavachid/main/assets/logo-icon-only.png" width="24" height="24" alt="KavachID Shield" style="vertical-align: middle;" />
 
 This document describes the REST API endpoints exposed by KavachID V1. All APIs are multi-tenant and isolated context-wise.
 

@@ -101,3 +101,25 @@ export default function Dashboard() {
 
 * **React Version:** Compatible with React 18.0.0+ and React 19.0.0+.
 * **Module Systems:** Supports ESM and CJS bundlers (Vite, Next.js client components, Webpack).
+
+
+## Getting Started
+
+### 1. Setup the Backend First
+Before using the frontend SDK, you must have the KavachID core backend running. 
+Follow the [KavachID Backend Setup Guide](https://github.com/Rajeev02/kavachid/blob/main/README.md) to start the backend server.
+
+### 2. Configure the SDK
+Once your backend is running (e.g., at `http://localhost:3000`), initialize the SDK:
+
+```typescript
+import { KavachID } from '@kavachid/sdk'; // or equivalent for your platform
+
+const kavach = new KavachID({
+  apiUrl: 'http://localhost:3000',
+  tenantId: 'your-tenant-id' // Optional: for multi-tenant setups
+});
+```
+
+### 3. Implement Authentication
+Use the provided hooks, components, or raw SDK methods to authenticate users.

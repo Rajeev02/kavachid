@@ -1,4 +1,4 @@
-# KavachID 🛡️
+# ![KavachID](./assets/logo-with-text.png)
 
 **KavachID** is a next-generation, 100% open-source Identity & Access Management (IAM) operating system and trust infrastructure. Built with NestJS, Prisma 7, and PostgreSQL, it is designed from the ground up to provide state-of-the-art security, multi-tenant isolation, Zero Trust device binding (DPoP), and high-performance token authorization.
 

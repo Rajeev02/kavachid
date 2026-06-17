@@ -41,7 +41,7 @@ export class KavachAuthHelper {
     if (this.authView && this.authView.children.length === 0) {
       this.authView.innerHTML = `
         <div class="auth-panel">
-          <h2>🛡️ <span class="app-name">${this.appName}</span></h2>
+          <h2><img src="https://raw.githubusercontent.com/Rajeev02/kavachid/main/assets/logo-icon-only.png" width="24" height="24" alt="KavachID Shield" style="vertical-align: middle;" /> <span class="app-name">${this.appName}</span></h2>
           <p>Secure authentication powered by KavachID</p>
           
           <div class="error-banner" id="error-banner"></div>

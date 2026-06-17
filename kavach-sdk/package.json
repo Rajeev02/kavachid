@@ -1,13 +1,13 @@
 {
   "name": "@kavachid/sdk",
   "version": "1.0.1",
-  "description": "Unified TypeScript/JavaScript Client SDK for KavachID",
+  "description": "KavachID sdk library. Next-generation IAM and trust infrastructure.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
-  "author": "KavachID Team",
+  "author": "Rajeev Joshi <info@kavachid.org>",
   "license": "MIT",
   "type": "module",
   "exports": {
@@ -30,5 +30,23 @@
   },
   "dependencies": {
     "@simplewebauthn/browser": "^13.3.0"
+  },
+  "keywords": [
+    "kavachid",
+    "iam",
+    "identity",
+    "security",
+    "authentication",
+    "authorization",
+    "sso",
+    "passkeys",
+    "fido2",
+    "zero-trust",
+    "oauth2",
+    "oidc"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Rajeev02/kavachid.git"
   }
 }

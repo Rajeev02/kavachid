@@ -1,4 +1,4 @@
-# @kavachid/sdk 🛡️
+# @kavachid/sdk <img src="https://raw.githubusercontent.com/Rajeev02/kavachid/main/assets/logo-icon-only.png" width="24" height="24" alt="KavachID Shield" style="vertical-align: middle;" />
 
 **Unified JavaScript/TypeScript Client SDK** for KavachID - next-generation, DPoP-bound, multi-tenant Identity & Access Management.
 
@@ -71,3 +71,25 @@ const activeSessions = await response.json();
 * **Supported Environments:** Web Browsers, Node.js (v18+), React Native, and Flutter.
 * **Browsers (Web Crypto API):** Chrome 37+, Firefox 34+, Safari 11+, Edge 12+.
 * **WebAuthn (Passkeys):** Safari 13+ (iOS/macOS), Chrome 67+, Firefox 60+, Edge 18+. Requires a Secure Context (HTTPS or localhost).
+
+
+## Getting Started
+
+### 1. Setup the Backend First
+Before using the frontend SDK, you must have the KavachID core backend running. 
+Follow the [KavachID Backend Setup Guide](https://github.com/Rajeev02/kavachid/blob/main/README.md) to start the backend server.
+
+### 2. Configure the SDK
+Once your backend is running (e.g., at `http://localhost:3000`), initialize the SDK:
+
+```typescript
+import { KavachID } from '@kavachid/sdk'; // or equivalent for your platform
+
+const kavach = new KavachID({
+  apiUrl: 'http://localhost:3000',
+  tenantId: 'your-tenant-id' // Optional: for multi-tenant setups
+});
+```
+
+### 3. Implement Authentication
+Use the provided hooks, components, or raw SDK methods to authenticate users.

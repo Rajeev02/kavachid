@@ -113,7 +113,7 @@ function App() {
     <>
       <style>{css}</style>
       <div className="card">
-        <h2>🛡️ KavachID React</h2>
+        <h2><img src="https://raw.githubusercontent.com/Rajeev02/kavachid/main/assets/logo-icon-only.png" width="24" height="24" alt="KavachID Shield" style="vertical-align: middle;" /> KavachID React</h2>
         <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginBottom: '1.5rem' }}>React Hooks SDK Demonstration</p>
 
         {error && <div style={{ color: '#ef4444', marginBottom: '1rem', fontSize: '0.875rem' }}>{error}</div>}

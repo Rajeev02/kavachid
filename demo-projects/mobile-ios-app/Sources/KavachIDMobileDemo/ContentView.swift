@@ -13,7 +13,7 @@ struct ContentView: View {
     
     var body: some View {
         VStack(spacing: 20) {
-            Text("🛡️ KavachID iOS")
+            Text("<img src="https://raw.githubusercontent.com/Rajeev02/kavachid/main/assets/logo-icon-only.png" width="24" height="24" alt="KavachID Shield" style="vertical-align: middle;" /> KavachID iOS")
                 .font(.largeTitle)
                 .fontWeight(.bold)
             

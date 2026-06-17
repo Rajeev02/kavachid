@@ -83,7 +83,7 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>🛡️ KavachID Mobile</Text>
+      <Text style={styles.title}><img src="https://raw.githubusercontent.com/Rajeev02/kavachid/main/assets/logo-icon-only.png" width="24" height="24" alt="KavachID Shield" style="vertical-align: middle;" /> KavachID Mobile</Text>
       <Text style={styles.subtitle}>React Native Client App</Text>
 
       {!authenticated ? (

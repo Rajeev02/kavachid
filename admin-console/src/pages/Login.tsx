@@ -53,7 +53,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     <div className="login-wrapper">
       <div className="login-card glass-panel">
         <div className="login-header">
-          <div style={{ display: 'inline-flex', padding: 10, background: 'rgba(255,255,255,0.03)', borderRadius: 12 }}>🛡️</div>
+          <div style={{ display: 'inline-flex', padding: 10, background: 'rgba(255,255,255,0.03)', borderRadius: 12 }}><img src="https://raw.githubusercontent.com/Rajeev02/kavachid/main/assets/logo-icon-only.png" width="24" height="24" alt="KavachID Shield" style="vertical-align: middle;" /></div>
           <h1 className="login-title">KavachID Admin</h1>
           <p className="login-subtitle">Control plane authorization dashboard</p>
         </div>

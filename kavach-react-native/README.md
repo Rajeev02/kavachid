@@ -96,3 +96,25 @@ export default function App() {
 * **React Native Version:** Compatible with React Native 0.70.0+ (supports legacy and New Architecture/TurboModule configurations).
 * **Supported OS:** iOS 13.0+ and Android 6.0+ (API Level 23+).
 * **Typings:** Includes full TypeScript definitions out of the box.
+
+
+## Getting Started
+
+### 1. Setup the Backend First
+Before using the frontend SDK, you must have the KavachID core backend running. 
+Follow the [KavachID Backend Setup Guide](https://github.com/Rajeev02/kavachid/blob/main/README.md) to start the backend server.
+
+### 2. Configure the SDK
+Once your backend is running (e.g., at `http://localhost:3000`), initialize the SDK:
+
+```typescript
+import { KavachID } from '@kavachid/sdk'; // or equivalent for your platform
+
+const kavach = new KavachID({
+  apiUrl: 'http://localhost:3000',
+  tenantId: 'your-tenant-id' // Optional: for multi-tenant setups
+});
+```
+
+### 3. Implement Authentication
+Use the provided hooks, components, or raw SDK methods to authenticate users.

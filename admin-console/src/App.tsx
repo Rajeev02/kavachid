@@ -93,7 +93,7 @@ export const App: React.FC = () => {
     <div className="app-container">
       <aside className="sidebar">
         <div className="logo-container">
-          <span style={{ fontSize: '24px' }}>🛡️</span>
+          <span style={{ fontSize: '24px' }}><img src="https://raw.githubusercontent.com/Rajeev02/kavachid/main/assets/logo-icon-only.png" width="24" height="24" alt="KavachID Shield" style="vertical-align: middle;" /></span>
           <span className="logo-text">KavachID</span>
         </div>
 
@@ -108,7 +108,7 @@ export const App: React.FC = () => {
             <span>🔑</span> Roles & Permissions
           </div>
           <div className={`nav-item ${activeTab === 'keys' ? 'active' : ''}`} onClick={() => setActiveTab('keys')}>
-            <span>🛡️</span> Key Management
+            <span><img src="https://raw.githubusercontent.com/Rajeev02/kavachid/main/assets/logo-icon-only.png" width="24" height="24" alt="KavachID Shield" style="vertical-align: middle;" /></span> Key Management
           </div>
           <div className={`nav-item ${activeTab === 'sessions' ? 'active' : ''}`} onClick={() => setActiveTab('sessions')}>
             <span>💻</span> Active Sessions

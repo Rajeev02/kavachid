@@ -1,13 +1,13 @@
 {
   "name": "@kavachid/react",
   "version": "1.0.1",
-  "description": "React Context and hooks for KavachID",
+  "description": "KavachID react library. Next-generation IAM and trust infrastructure.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
-  "author": "KavachID Team",
+  "author": "Rajeev Joshi <info@kavachid.org>",
   "license": "MIT",
   "scripts": {
     "build": "tsc",
@@ -28,5 +28,23 @@
     "ts-jest": "^29.2.5",
     "@types/jest": "^29.5.14",
     "typescript": "^5.3.0"
+  },
+  "keywords": [
+    "kavachid",
+    "iam",
+    "identity",
+    "security",
+    "authentication",
+    "authorization",
+    "sso",
+    "passkeys",
+    "fido2",
+    "zero-trust",
+    "oauth2",
+    "oidc"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Rajeev02/kavachid.git"
   }
 }
