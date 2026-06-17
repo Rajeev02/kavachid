@@ -1,126 +1,97 @@
-# @rajeev02/kavach-sdk
-
-The official Unified SDK for integrating with the **Kavach Ecosystem** (Kavach ID and Kavach Shield Engine). 
-
-This SDK provides developers with tools to easily implement cross-platform Identity Management, Biometric Step-ups, Device Fingerprinting, and Dynamic Risk Enforcement.
+<div align="center">
+  <h1>🛡️ @rajeev02/kavach-sdk</h1>
+  <p><b>The Universal Auth & Risk Engine SDK</b></p>
+  <p>Seamlessly integrate Passkeys, Role-Based Access, Device Fingerprinting, and the Kavach Shield Engine into your Web, Mobile, and Backend applications.</p>
+</div>
 
 ---
 
-## 📖 Philosophy: Secure by Default, Configurable by Exception
-Kavach operates on a zero-trust model powered by the **Kavach Shield Engine (KSE)**. 
-- **What is enabled by default:** Device Fingerprinting, VPN/TOR detection, Risk Scoring, and JWT rotation. 
-- **What you can disable/configure:** You can lower security levels for specific benign actions (e.g., viewing a catalog) via the Admin Console. 
-- **What KSE provides:** KSE silently scores all traffic. If a user performs a high-risk action (Level 3+) or exhibits risky behavior, the SDK will automatically throw a `401 STEP_UP_REQUIRED` demanding Biometrics or OTP.
+## 📖 Overview
 
-## ☁️ Deployment & Local Execution
+`@rajeev02/kavach-sdk` is the official client library for the **Kavach Ecosystem**. It abstracts away the complex cryptography of DPoP, PKCE, and WebAuthn, giving you a beautiful, simple API to authenticate users and dynamically enforce security policies based on device trust.
+
+### ☁️ Deployment Models
 **Do I need to deploy my own Kavach server to use this SDK?**
 No! 
-*   **Cloud Hosted:** You can simply point the `serverUrl` in the SDK to the Kavach Cloud SaaS API.
-*   **Local Execution:** The SDK executes Device Fingerprinting, Passkey generation, and Biometric Step-Ups (FaceID/TouchID) entirely locally on the user's Mobile or Web device. The backend is only contacted to cryptographically verify these local actions.
+*   **Kavach Cloud Hosted:** You can simply point the `serverUrl` in the SDK to your Kavach Cloud SaaS tenant.
+*   **Self-Hosted:** You can point the SDK to your own self-hosted Kavach ID server.
+*   **Local Execution:** The SDK handles Device Fingerprinting, Passkey generation, and Biometric Step-Ups (FaceID/TouchID) entirely locally on the user's Mobile or Web device. The backend is only contacted to cryptographically verify these actions.
 
 ---
 
 ## 🚀 Installation
 
-Install the package via your preferred package manager:
-
 ```bash
 npm install @rajeev02/kavach-sdk
 # or
 yarn add @rajeev02/kavach-sdk
+# or
+pnpm add @rajeev02/kavach-sdk
 ```
 
 ---
 
-## 💻 Frontend & Mobile Setup
+## 💻 1. Core Authentication API (Frontend/Mobile)
 
-### 1. Web (React / Vanilla JS)
-On the web, initialize the `KavachClient` and attach the device fingerprint to your headers before calling your APIs.
-
-```typescript
-import { KavachClient, generateDeviceFingerprint } from '@rajeev02/kavach-sdk';
-
-const kavach = new KavachClient({
-  serverUrl: 'https://api.yourdomain.com',
-  tenantId: 'your-tenant-id'
-});
-
-async function makeSecureRequest() {
-  const fingerprint = await generateDeviceFingerprint(); // Built-in utility
-  const token = await kavach.getAccessToken();
-
-  const response = await fetch('https://api.yourdomain.com/wallet/transfer', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'x-device-fingerprint': fingerprint
-    },
-    body: JSON.stringify({ amount: 500 })
-  });
-
-  if (response.status === 401) {
-    const data = await response.json();
-    if (data.decision === 'STEP_UP_REQUIRED') {
-      // Trigger FaceID / WebAuthn prompt
-      await kavach.loginWithPasskey('user@example.com', fingerprint);
-      // Retry request...
-    }
-  }
-}
-```
-
-### 2. React Native & Expo
-React Native implementations use the exact same `KavachClient`. To generate a native device fingerprint, you can use `expo-device` or `react-native-device-info` alongside the SDK.
+Initialize the client in your React, React Native, iOS, Android, or Vanilla JS app.
 
 ```typescript
 import { KavachClient } from '@rajeev02/kavach-sdk';
-import * as Device from 'expo-device';
 
-const fingerprint = `${Device.osName}|${Device.osVersion}|${Device.modelName}`;
-// Pass this fingerprint into your API headers, and KSE handles the rest!
+const kavach = new KavachClient({
+  serverUrl: 'https://api.yourkavachcloud.com',
+  tenantId: 'your-tenant-id',
+  clientId: 'your-app-client-id' // Optional
+});
 ```
 
-### 3. Native iOS (Swift) & Android (Kotlin)
-If you are building pure native apps without JavaScript, you construct the telemetry natively and interact directly with your backend's KSE-protected endpoints.
+### 🔐 Standard Email/Password Login
+The SDK automatically handles DPoP key generation, PKCE challenges, and secure token storage (LocalStorage for Web, Memory/Encrypted for Native).
 
-**iOS (Swift):**
-```swift
-let fingerprint = "\(UIDevice.current.systemName)|\(UIDevice.current.systemVersion)"
-var request = URLRequest(url: URL(string: "https://api.yourdomain.com/transfer")!)
-request.setValue(fingerprint, forHTTPHeaderField: "x-device-fingerprint")
-// Send request...
+```typescript
+// Register a user
+await kavach.register('user@example.com', 'securePassword123!', 'johndoe');
+
+// Login
+const session = await kavach.login('user@example.com', 'securePassword123!');
+console.log('Access Token:', session.accessToken);
 ```
 
-**Android (Kotlin):**
-```kotlin
-val fingerprint = "${Build.VERSION.RELEASE}|${Build.MODEL}"
-val request = Request.Builder()
-    .url("https://api.yourdomain.com/transfer")
-    .addHeader("x-device-fingerprint", fingerprint)
-    .build()
+### 👆 Passkeys & WebAuthn (Passwordless)
+Kavach natively supports FIDO2 Passkeys (FaceID, TouchID, Windows Hello). The SDK automatically triggers the native device biometric prompts.
+
+```typescript
+// Prompt the user to register their device's biometric scanner as a Passkey
+await kavach.registerPasskey();
+
+// Later, log them in instantly with just a biometric scan!
+const session = await kavach.loginWithPasskey('user@example.com');
 ```
 
-### 4. Flutter (Dart)
-Similar to native apps, Flutter clients attach standard telemetry headers.
+### 🔄 Session Management
+Tokens are automatically securely rotated.
 
-```dart
-import 'dart:io';
+```typescript
+// Get current user profile
+const profile = await kavach.getProfile();
 
-final fingerprint = '${Platform.operatingSystem}|${Platform.operatingSystemVersion}';
-final response = await http.post(
-  Uri.parse('https://api.yourdomain.com/transfer'),
-  headers: {
-    'x-device-fingerprint': fingerprint,
-  },
-);
+// Get active sessions across all devices
+const sessions = await kavach.getSessions();
+
+// Logout of current device
+await kavach.logout();
+
+// Revoke all active sessions on all devices (if phone is stolen)
+await kavach.logoutAll();
 ```
 
 ---
 
-## ⚙️ Backend Integration
+## 🛡️ 2. The Kavach Shield Engine (KSE)
+The Kavach Shield Engine (KSE) is our flagship enterprise risk engine. It scores every API request based on Device Trust, Network IP (VPN/TOR detection), and User Behavior.
 
-### 1. Node.js (Express Middleware)
-The SDK includes a highly convenient Express middleware to protect your routes automatically.
+### Securing Your Backend (Node.js/Express)
+You can protect your own backend routes using the SDK's built-in Express middleware. If KSE detects a VPN or a high-risk action, the middleware automatically returns a `401 STEP_UP_REQUIRED`.
 
 ```typescript
 import express from 'express';
@@ -129,77 +100,60 @@ import { kseEnforce } from '@rajeev02/kavach-sdk';
 const app = express();
 
 app.post('/wallet/transfer', kseEnforce({
-  kseBaseUrl: 'http://localhost:3000', // Your core Kavach backend
-  level: 3,                            // High Security
+  kseBaseUrl: 'https://api.yourkavachcloud.com', 
+  level: 3, // Level 3 = High Security Action (Requires strong device trust)
   actionType: 'wallet_transfer',
-  productName: 'Kavach Wallet',
-  getTenantId: (req) => req.headers['x-tenant-id'] as string,
-  getUserId: (req) => req.user.id,     // From your JWT middleware
+  productName: 'My Wallet App',
+  getTenantId: (req) => req.headers['x-tenant-id'],
+  getUserId: (req) => req.user.id,
   getSessionId: (req) => req.session.id
 }), (req, res) => {
-  // If the code reaches here, KSE has explicitly ALLOWED the action!
+  // KSE verified the device, network, and policy. Action is ALLOWED.
   res.json({ success: true, message: 'Transfer Complete' });
 });
 ```
 
-### 2. Python (FastAPI / Flask)
-If your microservices are in Python, you can call the Kavach Shield Engine directly via HTTP.
+### Handling Step-Ups on the Frontend
+If your backend's `kseEnforce` middleware returns a `STEP_UP_REQUIRED` (e.g., because the user is transferring $5,000 from a new country), you catch it on the frontend and trigger a Passkey challenge.
 
-```python
-import requests
+```typescript
+import { generateDeviceFingerprint } from '@rajeev02/kavach-sdk';
 
-def kse_enforce(user_id, ip, fingerprint):
-    response = requests.post("http://kavach-backend:3000/v1/kse/evaluate", json={
-        "tenantId": "default",
-        "userId": user_id,
-        "sessionId": "session_123",
-        "targetSecurityLevel": 3,
-        "actionType": "transfer",
-        "productName": "Wallet",
-        "deviceFingerprint": fingerprint,
-        "network": { "ipAddress": ip, "userAgent": "Python Client" }
-    })
-    
-    result = response.json()
-    if result["decision"] == "DENY":
-        raise Exception("Access Denied")
-    if result["decision"] == "STEP_UP_REQUIRED":
-        raise Exception("MFA Required")
-```
+async function transferMoney() {
+  const fingerprint = await generateDeviceFingerprint(); 
 
-### 3. Go (Golang)
-Calling KSE from a Go microservice:
+  const response = await fetch('https://my-backend.com/wallet/transfer', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${await kavach.getAccessToken()}`,
+      'x-device-fingerprint': fingerprint
+    },
+    body: JSON.stringify({ amount: 5000 })
+  });
 
-```go
-package main
-
-import (
-    "bytes"
-    "encoding/json"
-    "net/http"
-)
-
-func evaluateRisk() {
-    payload := map[string]interface{}{
-        "tenantId": "default",
-        "userId": "user123",
-        "targetSecurityLevel": 3,
-        "actionType": "transfer",
-        "productName": "Wallet",
-        "deviceFingerprint": "go-server",
-        "network": map[string]string{
-            "ipAddress": "127.0.0.1",
-        },
+  if (response.status === 401) {
+    const data = await response.json();
+    if (data.decision === 'STEP_UP_REQUIRED') {
+      // Security Policy triggered! Prompt user for FaceID/TouchID to verify identity
+      await kavach.loginWithPasskey('user@example.com', fingerprint);
+      // Re-run the transfer function now that trust is elevated!
+      return transferMoney();
     }
-    
-    jsonValue, _ := json.Marshal(payload)
-    resp, _ := http.Post("http://kavach-backend:3000/v1/kse/evaluate", "application/json", bytes.NewBuffer(jsonValue))
-    
-    // Parse response for ALLOW, DENY, or STEP_UP_REQUIRED
+  }
 }
 ```
 
 ---
 
-## 🛡️ Support
-For detailed policy configuration, please consult the Admin Console. To report SDK issues, please open a GitHub issue.
+## 🌍 Supported Platforms
+The `@rajeev02/kavach-sdk` is written in universal TypeScript and compiles down to targets that natively support:
+*   **Web:** React, Vue, Svelte, Vanilla JS.
+*   **Mobile:** React Native (Expo/Bare), Flutter (via JS interop or native bridges), Native iOS (Swift), Native Android (Kotlin).
+*   **Backend:** Node.js, Express, Fastify, NestJS.
+
+*Note: For Python and Go backends, you can interact with the Kavach API directly via standard HTTP requests.*
+
+---
+
+## 🤝 Contributing & Support
+Please refer to the root Kavach Ecosystem repository for contribution guidelines, architecture diagrams, and the Admin Console configuration guide.
