@@ -7,29 +7,32 @@ generator client {
 }
 
 model Tenant {
-  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name       String
-  status     String   @default("active")
-  maxFailedLogins Int @default(5) @map("max_failed_logins")
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String
+  status          String   @default("active")
+  maxFailedLogins Int      @default(5) @map("max_failed_logins")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  users         User[]
-  devices       Device[]
-  sessions      Session[]
-  organizations Organization[]
-  roles         Role[]
-  permissions   Permission[]
-  outboxEvents  OutboxEvent[]
-  auditLogs     AuditLog[]
-  orgMembers    OrganizationMember[]
-  rolePerms     RolePermission[]
-  userRoles     UserRole[]
-  passkeys      PasskeyCredential[]
-  appClients    AppClient[]
+  users              User[]
+  devices            Device[]
+  sessions           Session[]
+  organizations      Organization[]
+  roles              Role[]
+  permissions        Permission[]
+  outboxEvents       OutboxEvent[]
+  auditLogs          AuditLog[]
+  orgMembers         OrganizationMember[]
+  rolePerms          RolePermission[]
+  userRoles          UserRole[]
+  passkeys           PasskeyCredential[]
+  appClients         AppClient[]
   sessionAppAccesses SessionAppAccess[]
-  loginAttempts LoginAttempt[]
-  userFederations UserFederation[]
+  loginAttempts      LoginAttempt[]
+  userFederations    UserFederation[]
+  riskProfiles       UserRiskProfile[]
+  policyRules        PolicyRule[]
+  configOverrides    ProductConfigOverride[]
 
   @@map("tenants")
 }
@@ -46,13 +49,14 @@ model User {
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  devices         Device[]
-  sessions        Session[]
-  orgMembers      OrganizationMember[]
-  roles           UserRole[]
-  passkeys        PasskeyCredential[]
-  federations     UserFederation[]
+  tenant      Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  devices     Device[]
+  sessions    Session[]
+  orgMembers  OrganizationMember[]
+  roles       UserRole[]
+  passkeys    PasskeyCredential[]
+  federations UserFederation[]
+  riskProfile UserRiskProfile?
 
   currentWebAuthnChallenge String? @map("current_webauthn_challenge")
 
@@ -63,60 +67,60 @@ model User {
 }
 
 model Device {
-  id             String   @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId       String   @map("tenant_id") @db.Uuid
-  userId         String   @map("user_id") @db.Uuid
-  platform       String
-  deviceName     String?  @map("device_name")
-  fingerprint    String
-  dpopPublicKey  String?  @map("dpop_public_key")
-  isTrusted      Boolean  @default(false) @map("is_trusted")
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  lastSeenAt     DateTime @default(now()) @map("last_seen_at") @db.Timestamptz(6)
+  id            String   @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId      String   @map("tenant_id") @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  platform      String
+  deviceName    String?  @map("device_name")
+  fingerprint   String
+  dpopPublicKey String?  @map("dpop_public_key")
+  isTrusted     Boolean  @default(false) @map("is_trusted")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  lastSeenAt    DateTime @default(now()) @map("last_seen_at") @db.Timestamptz(6)
 
-  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  user           User     @relation(fields: [tenantId, userId], references: [tenantId, id], onDelete: Cascade)
-  sessions       Session[]
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user     User      @relation(fields: [tenantId, userId], references: [tenantId, id], onDelete: Cascade)
+  sessions Session[]
 
   @@id([tenantId, id])
   @@map("devices")
 }
 
 model PasskeyCredential {
-  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId       String   @map("tenant_id") @db.Uuid
-  userId         String   @map("user_id") @db.Uuid
-  credentialId   String   @unique @map("credential_id")
-  publicKey      Bytes    @map("public_key")
-  counter        BigInt   @default(0)
-  transports     String?  
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  credentialId String   @unique @map("credential_id")
+  publicKey    Bytes    @map("public_key")
+  counter      BigInt   @default(0)
+  transports   String?
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  user           User     @relation(fields: [tenantId, userId], references: [tenantId, id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [tenantId, userId], references: [tenantId, id], onDelete: Cascade)
 
   @@map("passkey_credentials")
 }
 
 model Session {
-  id                String    @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId          String    @map("tenant_id") @db.Uuid
-  userId            String    @map("user_id") @db.Uuid
-  deviceId          String?   @map("device_id") @db.Uuid
-  refreshVerHash    String    @map("refresh_token_hash")
-  ipAddress         String    @map("ip_address")
-  userAgent         String?   @map("user_agent")
-  lastSeenAt        DateTime  @default(now()) @map("last_seen_at") @db.Timestamptz(6)
-  riskScore         Decimal   @default(0.00) @map("risk_score") @db.Decimal(5, 2)
-  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  revokedAt         DateTime? @map("revoked_at") @db.Timestamptz(6)
-  loginClientId     String?   @map("login_client_id") @db.Uuid
+  id             String    @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  deviceId       String?   @map("device_id") @db.Uuid
+  refreshVerHash String    @map("refresh_token_hash")
+  ipAddress      String    @map("ip_address")
+  userAgent      String?   @map("user_agent")
+  lastSeenAt     DateTime  @default(now()) @map("last_seen_at") @db.Timestamptz(6)
+  riskScore      Decimal   @default(0.00) @map("risk_score") @db.Decimal(5, 2)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  revokedAt      DateTime? @map("revoked_at") @db.Timestamptz(6)
+  loginClientId  String?   @map("login_client_id") @db.Uuid
 
-  tenant            Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  user              User      @relation(fields: [tenantId, userId], references: [tenantId, id], onDelete: Cascade)
-  device            Device?   @relation(fields: [tenantId, deviceId], references: [tenantId, id], onDelete: SetNull)
-  loginClient       AppClient? @relation("SessionLoginClient", fields: [tenantId, loginClientId], references: [tenantId, id], onDelete: SetNull)
-  appAccesses       SessionAppAccess[]
+  tenant      Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user        User               @relation(fields: [tenantId, userId], references: [tenantId, id], onDelete: Cascade)
+  device      Device?            @relation(fields: [tenantId, deviceId], references: [tenantId, id], onDelete: SetNull)
+  loginClient AppClient?         @relation("SessionLoginClient", fields: [tenantId, loginClientId], references: [tenantId, id], onDelete: SetNull)
+  appAccesses SessionAppAccess[]
 
   @@id([tenantId, id])
   @@map("sessions")
@@ -129,8 +133,8 @@ model Organization {
   customDomain String?  @unique @map("custom_domain")
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  members      OrganizationMember[]
+  tenant  Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  members OrganizationMember[]
 
   @@id([tenantId, id])
   @@map("organizations")
@@ -142,22 +146,22 @@ model OrganizationMember {
   userId         String   @map("user_id") @db.Uuid
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  organization   Organization @relation(fields: [tenantId, organizationId], references: [tenantId, id], onDelete: Cascade)
-  user           User     @relation(fields: [tenantId, userId], references: [tenantId, id], onDelete: Cascade)
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [tenantId, organizationId], references: [tenantId, id], onDelete: Cascade)
+  user         User         @relation(fields: [tenantId, userId], references: [tenantId, id], onDelete: Cascade)
 
   @@id([tenantId, organizationId, userId])
   @@map("organization_members")
 }
 
 model Role {
-  id          String   @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId    String   @map("tenant_id") @db.Uuid
+  id          String  @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId    String  @map("tenant_id") @db.Uuid
   name        String
   description String?
-  isSystem    Boolean  @default(false) @map("is_system")
+  isSystem    Boolean @default(false) @map("is_system")
 
-  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant      Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   permissions RolePermission[]
   users       UserRole[]
 
@@ -167,13 +171,13 @@ model Role {
 }
 
 model Permission {
-  id        String   @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId  String   @map("tenant_id") @db.Uuid
-  resource  String
-  action    String
+  id       String @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+  resource String
+  action   String
 
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  roles     RolePermission[]
+  tenant Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  roles  RolePermission[]
 
   @@id([tenantId, id])
   @@unique([tenantId, resource, action])
@@ -185,9 +189,9 @@ model RolePermission {
   roleId       String @map("role_id") @db.Uuid
   permissionId String @map("permission_id") @db.Uuid
 
-  tenant       Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  role         Role   @relation(fields: [tenantId, roleId], references: [tenantId, id], onDelete: Cascade)
-  permission   Permission @relation(fields: [tenantId, permissionId], references: [tenantId, id], onDelete: Cascade)
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  role       Role       @relation(fields: [tenantId, roleId], references: [tenantId, id], onDelete: Cascade)
+  permission Permission @relation(fields: [tenantId, permissionId], references: [tenantId, id], onDelete: Cascade)
 
   @@id([tenantId, roleId, permissionId])
   @@map("role_permissions")
@@ -198,9 +202,9 @@ model UserRole {
   userId   String @map("user_id") @db.Uuid
   roleId   String @map("role_id") @db.Uuid
 
-  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  user     User   @relation(fields: [tenantId, userId], references: [tenantId, id], onDelete: Cascade)
-  role     Role   @relation(fields: [tenantId, roleId], references: [tenantId, id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [tenantId, userId], references: [tenantId, id], onDelete: Cascade)
+  role   Role   @relation(fields: [tenantId, roleId], references: [tenantId, id], onDelete: Cascade)
 
   @@id([tenantId, userId, roleId])
   @@map("user_roles")
@@ -230,7 +234,7 @@ model OutboxEvent {
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   processedAt DateTime? @map("processed_at") @db.Timestamptz(6)
 
-  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@map("outbox_events")
 }
@@ -245,7 +249,7 @@ model AuditLog {
   metadata     Json?
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@id([tenantId, id])
   @@map("audit_logs")
@@ -258,8 +262,8 @@ model AppClient {
   description String?
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  sessionsOriginated Session[] @relation("SessionLoginClient")
+  tenant             Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sessionsOriginated Session[]          @relation("SessionLoginClient")
   sessionAccesses    SessionAppAccess[]
 
   @@id([tenantId, id])
@@ -272,9 +276,9 @@ model SessionAppAccess {
   appClientId String   @map("app_client_id") @db.Uuid
   accessedAt  DateTime @default(now()) @map("accessed_at") @db.Timestamptz(6)
 
-  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  session     Session   @relation(fields: [tenantId, sessionId], references: [tenantId, id], onDelete: Cascade)
-  appClient   AppClient @relation(fields: [tenantId, appClientId], references: [tenantId, id], onDelete: Cascade)
+  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  session   Session   @relation(fields: [tenantId, sessionId], references: [tenantId, id], onDelete: Cascade)
+  appClient AppClient @relation(fields: [tenantId, appClientId], references: [tenantId, id], onDelete: Cascade)
 
   @@id([tenantId, sessionId, appClientId])
   @@map("session_app_accesses")
@@ -288,7 +292,7 @@ model LoginAttempt {
   success    Boolean
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@id([tenantId, id])
   @@map("login_attempts")
@@ -302,8 +306,8 @@ model UserFederation {
   providerSubject String   @map("provider_subject")
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  user            User     @relation(fields: [tenantId, userId], references: [tenantId, id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [tenantId, userId], references: [tenantId, id], onDelete: Cascade)
 
   @@id([tenantId, id])
   @@unique([tenantId, provider, providerSubject])
@@ -316,4 +320,51 @@ model RateLimit {
   expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
 
   @@map("rate_limits")
+}
+
+model UserRiskProfile {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId         String   @map("tenant_id") @db.Uuid
+  userId           String   @map("user_id") @db.Uuid
+  baseRiskScore    Int      @default(0) @map("base_risk_score")
+  lastKnownCountry String?  @map("last_known_country")
+  updatedAt        DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [tenantId, userId], references: [tenantId, id], onDelete: Cascade)
+
+  @@unique([tenantId, userId])
+  @@map("user_risk_profiles")
+}
+
+model PolicyRule {
+  id               String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId         String  @map("tenant_id") @db.Uuid
+  securityLevel    Int     @map("security_level") // 0 to 5
+  minRiskScore     Int     @map("min_risk_score")
+  maxRiskScore     Int     @map("max_risk_score")
+  requiredControls Json    @map("required_controls")
+  isActive         Boolean @default(true) @map("is_active")
+
+  tenant    Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  overrides ProductConfigOverride[]
+
+  @@map("policy_rules")
+}
+
+model ProductConfigOverride {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId           String   @map("tenant_id") @db.Uuid
+  policyRuleId       String   @map("policy_rule_id") @db.Uuid
+  productName        String   @map("product_name")
+  featureName        String?  @map("feature_name")
+  downgradedControls Json     @map("downgraded_controls")
+  justification      String?
+  isActive           Boolean  @default(true) @map("is_active")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  policyRule PolicyRule @relation(fields: [policyRuleId], references: [id], onDelete: Cascade)
+
+  @@map("product_config_overrides")
 }

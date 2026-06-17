@@ -4,6 +4,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { KavachCoreModule } from './modules/kavach-core.module';
 import { AppController } from './app.controller';
+import { KseModule } from './modules/kse/kse.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { AppController } from './app.controller';
       rootPath: join(__dirname, '..', 'admin-console', 'dist'),
       serveRoot: '/admin',
     }),
+    KseModule,
   ],
   controllers: [AppController],
   providers: [],
