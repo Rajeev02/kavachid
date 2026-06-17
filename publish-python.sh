@@ -16,7 +16,7 @@ echo "📦 Building wheel..."
 python3 -m build
 
 echo "📦 Uploading to PyPI..."
-python3 -m twine upload dist/*
+python3 -m twine upload --skip-existing dist/*
 
 echo "🧹 Cleaning up..."
 deactivate
