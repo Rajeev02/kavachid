@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Worker } from 'worker_threads';
-import { generateKeyPairSync } from 'crypto';
+import { generateKeyPairSync, createCipheriv, createDecipheriv, createHash, randomBytes } from 'crypto';
 import * as jose from 'jose';
 
 @Injectable()
@@ -190,5 +190,46 @@ export class CryptoService {
     // Calculate thumbprint (SHA-256) of the client public key to bind to the access token
     const jkt = await jose.calculateJwkThumbprint(header.jwk);
     return { jkt, publicKeyJwk: header.jwk };
+  }
+
+  /**
+   * Encrypt a private key PEM using AES-256-GCM.
+   */
+  encryptPrivateKey(privateKeyPem: string): string {
+    const masterKey = process.env.KAVACHID_MASTER_KEY || 'default-kavachid-master-key-must-change-32bytes';
+    // Hash key to ensure it is exactly 32 bytes
+    const key = createHash('sha256').update(masterKey).digest();
+    const iv = randomBytes(12);
+    
+    const cipher = createCipheriv('aes-256-gcm', key, iv);
+    let encrypted = cipher.update(privateKeyPem, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    const authTag = cipher.getAuthTag().toString('hex');
+    
+    return `${iv.toString('hex')}:${encrypted}:${authTag}`;
+  }
+
+  /**
+   * Decrypt a private key PEM using AES-256-GCM.
+   */
+  decryptPrivateKey(encrypted: string): string {
+    const masterKey = process.env.KAVACHID_MASTER_KEY || 'default-kavachid-master-key-must-change-32bytes';
+    const key = createHash('sha256').update(masterKey).digest();
+    
+    const parts = encrypted.split(':');
+    if (parts.length !== 3) {
+      throw new Error('Invalid encrypted private key format');
+    }
+    
+    const iv = Buffer.from(parts[0], 'hex');
+    const ciphertext = Buffer.from(parts[1], 'hex');
+    const authTag = Buffer.from(parts[2], 'hex');
+    
+    const decipher = createDecipheriv('aes-256-gcm', key, iv);
+    decipher.setAuthTag(authTag);
+    
+    let decrypted = decipher.update(ciphertext, undefined, 'utf8');
+    decrypted += decipher.final('utf8');
+    return decrypted;
   }
 }

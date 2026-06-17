@@ -1,16 +1,23 @@
-import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
+import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 @Injectable()
-export class OutboxService implements OnModuleInit {
+export class OutboxService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(OutboxService.name);
   private isPolling = false;
+  private pollInterval: NodeJS.Timeout | undefined;
 
   constructor(private readonly prisma: PrismaService) {}
 
   onModuleInit() {
     // Poll for pending outbox events every 5 seconds
-    setInterval(() => this.processOutbox(), 5000);
+    this.pollInterval = setInterval(() => this.processOutbox(), 5000);
+  }
+
+  onModuleDestroy() {
+    if (this.pollInterval) {
+      clearInterval(this.pollInterval);
+    }
   }
 
   /**
