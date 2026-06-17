@@ -42,42 +42,68 @@ src/
 
 ---
 
-## 🏃 Getting Started
+## 🏃 Sequential Setup Guide
 
-### 1. Installation & Setup
-```bash
-# Clone the repository
-git clone https://github.com/Rajeev02/kavachid.git
-cd kavachid
+To integrate KavachID into your architecture, follow this step-by-step sequence:
 
-# Install dependencies
-npm install
-```
+### Step 1: Spin Up the KavachID Core Auth Server (Port 3000)
+First, clone the core server repository, configure its database connections, and run it. This acts as your centralized **Authentication Hub** (issuing JWKS public keys, managing users, sessions, passkeys, and tenant contexts).
 
-### 2. Configure Environment Variables
-Create a `.env` file in the root directory:
-```env
-DATABASE_URL="postgresql://username:password@localhost:5432/kavachid?schema=public"
-KAVACHID_MASTER_KEY="your-32-byte-hex-encoded-master-encryption-key"
-WEBHOOK_URL="http://localhost:3000/webhook"
-GOOGLE_CLIENT_ID="your-google-client-id"
-MS_CLIENT_ID="your-microsoft-client-id"
-```
+1. Clone & install dependencies:
+   ```bash
+   git clone https://github.com/Rajeev02/kavachid.git
+   cd kavachid
+   npm install
+   ```
+2. Configure environment variables in `.env`:
+   ```env
+   DATABASE_URL="postgresql://username:password@localhost:5432/kavachid?schema=public"
+   KAVACHID_MASTER_KEY="your-32-byte-hex-encoded-master-encryption-key"
+   WEBHOOK_URL="http://localhost:3000/webhook"
+   GOOGLE_CLIENT_ID="your-google-client-id"
+   MS_CLIENT_ID="your-microsoft-client-id"
+   ```
+3. Deploy the database schema to your local PostgreSQL instance:
+   ```bash
+   npx prisma db push
+   ```
+4. Start the Auth Server:
+   ```bash
+   npm run start:dev
+   ```
+   *The core server is now active on `http://localhost:3000`.*
 
-### 3. Deploy Database Schema
-Push the schemas, custom tables (`RateLimit`, `LoginAttempt`, `UserFederation`, `PasskeyCredential`) to your local PostgreSQL instance:
-```bash
-npx prisma db push
-```
+### Step 2: Configure & Start Your Resource Backend (Port 3001)
+Next, boot up your custom backend API server (which will process client requests and securely authorize them using KavachID tokens). 
+* Use `@kavachid/express` middleware or NestJS `KavachCoreModule` to secure your endpoints.
+* Your server will verify Bearer tokens locally against the public JWKS keys exposed by the Core Auth Server on `http://localhost:3000/oauth/jwks`.
 
-### 4. Run the Servers
-```bash
-# Backend server
-npm run start:dev
+1. Go to the demo backend folder:
+   ```bash
+   cd demo-projects/backend-app
+   npm install --legacy-peer-deps
+   ```
+2. Start the API server:
+   ```bash
+   npm run start:dev
+   ```
+   *Your resource backend is now listening on `http://localhost:3001`.*
 
-# Frontend Examples server (SSO Suite)
-npx serve examples -l 8080
-```
+### Step 3: Run the Frontend Client Applications
+Finally, run your client apps (Web, React, React Native, iOS, or Android). They will talk to the Auth Server (Port 3000) to authenticate the user and then attach the DPoP-bound Bearer token to request data from your Resource Backend (Port 3001).
+
+* **React App (Vite):**
+  ```bash
+  cd demo-projects/web-react-app
+  npm install --legacy-peer-deps
+  npm run dev
+  ```
+  *Your React client runs on `http://localhost:8081`.*
+* **Vanilla Web App:**
+  ```bash
+  npx serve demo-projects/web-vanilla-app -l 8082
+  ```
+  *Your Vanilla Web client runs on `http://localhost:8082`.*
 
 ---
 
