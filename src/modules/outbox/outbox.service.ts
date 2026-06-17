@@ -1,6 +1,7 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import axios from 'axios';
+import { KavachConfigService } from '../kavach-config.service';
 
 @Injectable()
 export class OutboxService implements OnModuleInit, OnModuleDestroy {
@@ -8,7 +9,10 @@ export class OutboxService implements OnModuleInit, OnModuleDestroy {
   private isPolling = false;
   private pollInterval: NodeJS.Timeout | undefined;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly config: KavachConfigService,
+  ) {}
 
   onModuleInit() {
     // Poll for pending outbox events every 5 seconds
@@ -74,7 +78,7 @@ export class OutboxService implements OnModuleInit, OnModuleDestroy {
 
       this.logger.log(`Found ${eligibleEvents.length} eligible outbox events to process.`);
 
-      const webhookUrl = process.env.WEBHOOK_URL || 'http://localhost:3000/webhook';
+      const webhookUrl = this.config.webhookUrl;
 
       for (const event of eligibleEvents) {
         try {

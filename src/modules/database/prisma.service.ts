@@ -2,13 +2,14 @@ import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
+import { KavachConfigService } from '../kavach-config.service';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   private static pool: Pool;
 
-  constructor() {
-    const connectionString = process.env.DATABASE_URL;
+  constructor(private readonly config: KavachConfigService) {
+    const connectionString = config.databaseUrl;
     if (!PrismaService.pool) {
       PrismaService.pool = new Pool({ connectionString });
     }

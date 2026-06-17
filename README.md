@@ -113,35 +113,129 @@ npm run test:e2e
 
 ---
 
+## 📦 Reusable Backend Library (`KavachCoreModule`)
+
+KavachID can be imported directly into other NestJS backends as a reusable authentication and authorization dynamic module. This allows you to manage user accounts, sessions, key rotation, and RBAC policies while maintaining complete control over your database.
+
+### 1. Import the Core Module
+In your main NestJS application module (e.g., `app.module.ts`), import the module dynamically:
+
+```typescript
+import { Module } from '@nestjs/common';
+import { KavachCoreModule } from 'kavachid';
+
+@Module({
+  imports: [
+    KavachCoreModule.forRoot({
+      databaseUrl: 'postgresql://username:password@localhost:5432/kavachid?schema=public',
+      masterKey: 'your-32-byte-hex-encoded-master-encryption-key',
+      webhookUrl: 'https://your-api.domain.com/webhooks',
+      accessTokenExpiresIn: '15m',
+      refreshTokenExpiresIn: '7d',
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+*Note: If no options are passed, the module defaults to standalone hosting mode, automatically reading configurations from your `.env` variables.*
+
+### 2. Protect Endpoints Using Guards and Decorators
+The backend module exports pre-built NestJS guards and custom decorators for seamless access control:
+
+```typescript
+import { Controller, Get, UseGuards } from '@nestjs/common';
+import { AuthGuard, PermissionsGuard, RequirePermissions, Audit } from 'kavachid';
+
+@Controller('billing')
+@UseGuards(AuthGuard, PermissionsGuard) // Require valid JWT and tenant isolation context
+export class BillingController {
+  
+  @Get('invoices')
+  @RequirePermissions('billing:read') // Enforce Role-Based Access Control
+  @Audit('READ_INVOICES') // Automatically capture audit trail in the outbox
+  async getInvoices() {
+    return { invoices: [] };
+  }
+}
+```
+
+---
+
+## 📱 Unified JS/TS Client SDK (`@kavachid/sdk`)
+
+The `@kavachid/sdk` is a lightweight, cross-platform TypeScript SDK compatible with Web, React, Next.js, React Native, and Node.js environments. It handles OAuth operations, PKCE challenges, DPoP cryptographic proof signing, and silent token refresh rotation.
+
+### 1. Installation
+Install the SDK directly from your project:
+```bash
+npm install ./kavach-sdk
+```
+
+### 2. Basic Initialization
+Initialize the `KavachClient` with your KavachID endpoint and tenant ID:
+
+```typescript
+import { KavachClient } from '@kavachid/sdk';
+
+const client = new KavachClient({
+  serverUrl: 'http://localhost:3000',
+  tenantId: '123e4567-e89b-12d3-a456-426614174000', // Multi-tenant context ID
+});
+```
+
+### 3. Register & Login
+```typescript
+// Register a new user account
+await client.register('user@domain.com', 'SecurePassword123!', 'johndoe', { customMetadata: 'value' });
+
+// Log in user, generating device-bound DPoP key pairs automatically
+const authData = await client.login('user@domain.com', 'SecurePassword123!');
+console.log('Access Token:', authData.accessToken);
+```
+
+### 4. Authenticated API Requests with Silent Token Rotation
+Use `authenticatedFetch` as a drop-in replacement for standard `fetch`. It automatically signs requests with ephemeral DPoP headers and handles silent token refresh retries on 401 responses:
+
+```typescript
+const response = await client.authenticatedFetch('/auth/sessions');
+const activeSessions = await response.json();
+```
+
+### 5. Custom Storage Provider (React Native & Mobile Support)
+By default, the SDK uses `localStorage` in the browser and fallback in-memory storage elsewhere. You can pass a custom storage adapter (e.g., using `react-native-keychain` or custom SQLite store) by implementing the `StorageProvider` interface:
+
+```typescript
+import { KavachClient, StorageProvider } from '@kavachid/sdk';
+
+const customSecureStorage: StorageProvider = {
+  async getItem(key: string) {
+    return secureStorage.read(key);
+  },
+  async setItem(key: string, value: string) {
+    await secureStorage.write(key, value);
+  },
+  async removeItem(key: string) {
+    await secureStorage.delete(key);
+  }
+};
+
+const client = new KavachClient({
+  serverUrl: 'http://localhost:3000',
+  tenantId: '123e4567-e89b-12d3-a456-426614174000',
+  storage: customSecureStorage,
+});
+```
+
+---
+
 ## 🗺️ Remaining Project Phases
 
 Based on the core vision of KavachID, the remaining implementation milestones are:
 
-* **Phase 5: Admin Console (UI)**: A React-based web control plane for managing tenants, viewing security audit logs, monitoring session metrics, managing users, and rotating signing keys manually.
-* **Phase 6: Unified SDK Platform**: Client libraries for frontend and backend integration.
-* **Phase 7: Infrastructure & Kubernetes Operator**: Docker Compose configs, Helm Charts, and a Kubernetes Operator for zero-downtime, self-hosted deployment.
-* **Phase 8: OIDC Conformance & Compliance**: Validating compliance against the FAPI 2.0 security standards and executing automated cryptographic stress-testing.
-* **Phase 9: Documentation & Community Portal**: Comprehensive developer documentation, RFC processes, and ADR guidelines.
-
----
-
-## 📦 Publishing Client SDK Libraries
-
-Yes! The core authentication and authorization services of KavachID can be easily consumed by publishing client-side SDK libraries. Since KavachID is API-first, standard client SDKs can be distributed across package registries:
-
-* **Node.js/React/Next.js/React Native**: Published via **npm** under `@kavachid/react`, `@kavachid/react-native`, or `@kavachid/node`.
-* **Flutter**: Published via **pub.dev** as `kavachid_flutter`.
-* **Android (Native)**: Published via **Maven Central** as `kavachid-android`.
-* **iOS (Native)**: Distributed via **CocoaPods** or **Swift Package Manager (SPM)** as `kavachid-ios`.
-
-### How Client SDKs Function Internally:
-1. **PKCE & Authorization Code Flow**: The SDKs automate the generation of cryptographically secure `code_verifier` and `code_challenge` parameters (RFC 7636) to prevent authorization code interception.
-2. **Client-Side DPoP Signing**: 
-   * **Web/React/Next.js**: Uses the Web Crypto API to generate ephemeral keys and sign DPoP headers.
-   * **React Native**: Uses `react-native-keychain` and secure enclave interfaces to sign headers.
-   * **Flutter/iOS/Android**: Uses native keychains (Android Keystore / iOS Keychain) to bind the token cryptographically to device hardware.
-3. **Session State & Refresh Handlers**: Automatically listens for token expiration and triggers background refresh calls (RTR) to fetch updated access tokens without interrupting the user.
-4. **Backend SDK Verification**: Backend SDKs (like `@kavachid/node` or Go/Python SDKs) pull public keys from the server's `/oauth/jwks` endpoint and verify incoming access tokens locally (sub-millisecond speed) without requiring database lookups or API calls to the KavachID server.
+* **Phase 8: Infrastructure & Kubernetes Operator**: Docker Compose configurations, Helm Charts, and a custom Kubernetes Operator for zero-downtime, self-hosted clusters.
+* **Phase 9: OIDC Conformance & Compliance**: Validating compliant endpoints against OIDC core standards and FAPI 2.0 security profiles.
+* **Phase 10: Documentation & Community Portal**: Comprehensive developer guide, RFC feedback process, and SDK extensions for Flutter, Go, and Python.
 
 ---
 

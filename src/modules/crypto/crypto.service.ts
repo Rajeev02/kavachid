@@ -2,9 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { Worker } from 'worker_threads';
 import { generateKeyPairSync, createCipheriv, createDecipheriv, createHash, randomBytes } from 'crypto';
 import * as jose from 'jose';
+import { KavachConfigService } from '../kavach-config.service';
 
 @Injectable()
 export class CryptoService {
+  constructor(private readonly config: KavachConfigService) {}
+
   /**
    * Run Argon2id password hashing and verification in a separate Worker Thread
    * to prevent blocking NestJS's main event loop.
@@ -196,7 +199,7 @@ export class CryptoService {
    * Encrypt a private key PEM using AES-256-GCM.
    */
   encryptPrivateKey(privateKeyPem: string): string {
-    const masterKey = process.env.KAVACHID_MASTER_KEY || 'default-kavachid-master-key-must-change-32bytes';
+    const masterKey = this.config.masterKey;
     // Hash key to ensure it is exactly 32 bytes
     const key = createHash('sha256').update(masterKey).digest();
     const iv = randomBytes(12);
@@ -213,7 +216,7 @@ export class CryptoService {
    * Decrypt a private key PEM using AES-256-GCM.
    */
   decryptPrivateKey(encrypted: string): string {
-    const masterKey = process.env.KAVACHID_MASTER_KEY || 'default-kavachid-master-key-must-change-32bytes';
+    const masterKey = this.config.masterKey;
     const key = createHash('sha256').update(masterKey).digest();
     
     const parts = encrypted.split(':');
