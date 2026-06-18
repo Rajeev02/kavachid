@@ -82,14 +82,7 @@ npm run start:dev
 
 ---
 
-## Screenshots
 
-*   **Mobile App:** [Placeholder: iOS Biometric Prompt]
-*   **Dashboard:** [Placeholder: Admin Console Risk Rules]
-*   **Admin Panel:** [Placeholder: Tenant Overview]
-*   **Architecture Diagram:** [Placeholder: KSE Flow Diagram]
-
----
 
 ## Compatibility Matrix
 
