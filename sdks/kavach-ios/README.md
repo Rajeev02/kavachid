@@ -56,6 +56,8 @@ It directly utilizes Apple's `LocalAuthentication` and `Security` frameworks to 
 
 ## 📦 Installation
 
+**Live Package:** [CocoaPods: KavachSDK](https://cocoapods.org/pods/KavachSDK)
+
 ### CocoaPods
 CocoaPods is a dependency manager for Cocoa projects. Add the following to your `Podfile`:
 
@@ -134,4 +136,4 @@ Add this to your `Info.plist`:
 
 ## 📄 License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+This project is completely open-source. It is distributed under the [MIT License](https://opensource.org/licenses/MIT). See the `LICENSE` file in the root repository for more information.

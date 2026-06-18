@@ -57,6 +57,8 @@ By utilizing standard Flutter `MethodChannels` and Dart FFI, it abstracts away c
 
 ## 📦 Installation
 
+**Live Package:** [Pub.dev: kavach_flutter](https://pub.dev/packages/kavach_flutter)
+
 Add `kavach_flutter` to your `pubspec.yaml`:
 
 ```yaml
@@ -126,4 +128,4 @@ You must add `NSFaceIDUsageDescription` to your `ios/Runner/Info.plist`:
 
 ## 📄 License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+This project is completely open-source. It is distributed under the [MIT License](https://opensource.org/licenses/MIT). See the `LICENSE` file in the root repository for more information.

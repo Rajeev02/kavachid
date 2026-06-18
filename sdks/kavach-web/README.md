@@ -57,6 +57,8 @@ It is designed for frontend engineers building React, Vue, Angular, or Vanilla J
 
 ## 📦 Installation
 
+**Live Package:** [NPM: @rajeev02/kavach-web](https://www.npmjs.com/package/@rajeev02/kavach-web)
+
 Install the package via your preferred node package manager:
 
 ```bash
@@ -135,4 +137,4 @@ async function transferFunds(amount: number) {
 
 ## 📄 License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+This project is completely open-source. It is distributed under the [MIT License](https://opensource.org/licenses/MIT). See the `LICENSE` file in the root repository for more information.

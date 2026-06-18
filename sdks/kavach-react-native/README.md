@@ -57,6 +57,8 @@ Instead of relying on the legacy asynchronous React Native Bridge, this SDK leve
 
 ## 📦 Installation
 
+**Live Package:** [NPM: @rajeev02/kavach-react-native](https://www.npmjs.com/package/@rajeev02/kavach-react-native)
+
 ```bash
 # NPM
 npm install @rajeev02/kavach-react-native
@@ -121,4 +123,4 @@ Apple strictly requires a usage description string for FaceID. You must add the 
 
 ## 📄 License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+This project is completely open-source. It is distributed under the [MIT License](https://opensource.org/licenses/MIT). See the `LICENSE` file in the root repository for more information.

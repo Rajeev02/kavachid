@@ -56,6 +56,8 @@ It leverages `androidx.biometric.BiometricPrompt` and the Android Keystore syste
 
 ## 📦 Installation
 
+**Live Package:** [Maven Central: io.github.rajeev02.kavach:kavach-android](https://central.sonatype.com/artifact/io.github.rajeev02.kavach/kavach-android)
+
 ### Maven Central
 The SDK is hosted on Sonatype Maven Central. Ensure `mavenCentral()` is in your root `settings.gradle` or `build.gradle`, then add the dependency:
 
@@ -125,4 +127,4 @@ If you are using aggressive minification in your `release` build type, the Kavac
 
 ## 📄 License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+This project is completely open-source. It is distributed under the [MIT License](https://opensource.org/licenses/MIT). See the `LICENSE` file in the root repository for more information.

@@ -55,6 +55,8 @@ The **Kavach Go SDK** provides highly concurrent utilities to integrate Go backe
 
 ## 📦 Installation
 
+**Live Package:** [pkg.go.dev: kavach-go](https://pkg.go.dev/github.com/Rajeev02/kavachid/sdks/kavach-go)
+
 Initialize your go module and fetch the package:
 
 ```bash
@@ -126,4 +128,4 @@ kavachClient.SetCache(redisClient, time.Minute * 5)
 
 ## 📄 License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+This project is completely open-source. It is distributed under the [MIT License](https://opensource.org/licenses/MIT). See the `LICENSE` file in the root repository for more information.

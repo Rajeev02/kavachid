@@ -56,6 +56,8 @@ It exposes asynchronous and synchronous utilities to validate cryptographically 
 
 ## 📦 Installation
 
+**Live Package:** [PyPI: rajeev02-kavach-sdk](https://pypi.org/project/rajeev02-kavach-sdk/)
+
 Install via PyPI:
 
 ```bash
@@ -111,4 +113,4 @@ KAVACH_CORE_URL="https://api.yourdomain.com/kavach"
 
 ## 📄 License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+This project is completely open-source. It is distributed under the [MIT License](https://opensource.org/licenses/MIT). See the `LICENSE` file in the root repository for more information.
