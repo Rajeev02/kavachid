@@ -345,6 +345,22 @@ We enforce Conventional Commits:
 
 ---
 
+## Live Ecosystem Packages
+
+Kavach provides natively compiled, globally published SDKs for all major platforms:
+
+| Platform | Source Code | Live Registry Package |
+| :--- | :--- | :--- |
+| **🌍 Web** | [sdks/kavach-web](./sdks/kavach-web) | [NPM: @rajeev02/kavach-web](https://www.npmjs.com/package/@rajeev02/kavach-web) |
+| **📱 React Native** | [sdks/kavach-react-native](./sdks/kavach-react-native) | [NPM: @rajeev02/kavach-react-native](https://www.npmjs.com/package/@rajeev02/kavach-react-native) |
+| **🍎 iOS (Swift)** | [sdks/kavach-ios](./sdks/kavach-ios) | [CocoaPods: KavachSDK](https://cocoapods.org/pods/KavachSDK) |
+| **🤖 Android (Kotlin)** | [sdks/kavach-android](./sdks/kavach-android) | [Maven: io.github.rajeev02.kavach](https://central.sonatype.com/artifact/io.github.rajeev02.kavach/kavach-android) |
+| **🐦 Flutter** | [sdks/kavach-flutter](./sdks/kavach-flutter) | [Pub.dev: kavach_flutter](https://pub.dev/packages/kavach_flutter) |
+| **🐍 Python** | [sdks/kavach-python](./sdks/kavach-python) | [PyPI: rajeev02-kavach-sdk](https://pypi.org/project/rajeev02-kavach-sdk/) |
+| **🐹 Go** | [sdks/kavach-go](./sdks/kavach-go) | [pkg.go.dev](https://pkg.go.dev/github.com/Rajeev02/kavachid/sdks/kavach-go) |
+
+---
+
 ## Documentation
 
 *   [Web SDK Docs](./sdks/kavach-web/README.md)
