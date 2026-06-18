@@ -300,11 +300,9 @@ docker run -p 3000:3000 kavach-core
 The repository uses strict GitHub Actions pipelines:
 Commit → Build (TSC/Swift/Kotlin) → Test (Jest/XCTest/JUnit) → Security Scan → Release (NPM/Maven/CocoaPods)
 
-To trigger a release across all 6 SDKs simultaneously:
-```bash
-node bump-version.js
-./publish.sh
-```
+To trigger a release across all 7 SDKs simultaneously, or to publish them one-by-one manually, see the comprehensive publishing guide:
+
+👉 **[Step-by-Step Publishing Guide](docs/PUBLISHING.md)**
 
 ---
 
