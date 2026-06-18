@@ -1,106 +1,129 @@
-# kavach_flutter
+# Kavach Flutter SDK (`kavach_flutter`)
 
-Flutter SDK for the Kavach Shield Engine.
+Enterprise-grade Flutter bindings for the Kavach Shield Engine, providing cross-platform Biometric and FIDO2 integration.
 
-[![Version](https://img.shields.io/badge/version-1.0.4-blue.svg)](https://pub.dev/packages/kavach_flutter)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
-[![Platform Support](https://img.shields.io/badge/platform-Flutter-lightgrey.svg)]()
+[![Pub.dev Version](https://img.shields.io/pub/v/kavach_flutter.svg?style=flat-square)](https://pub.dev/packages/kavach_flutter)
+[![Language](https://img.shields.io/badge/Language-Dart-blue.svg?style=flat-square)]()
+[![Platform Support](https://img.shields.io/badge/Platform-iOS%20%7C%20Android-lightgrey.svg?style=flat-square)]()
+[![License](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
----
-
-## TL;DR
-
-The Flutter SDK provides a unified Dart interface to the native iOS and Android biometric and device fingerprinting APIs.
-
-**Who should use it:** Flutter developers building cross-platform apps requiring high-security biometric authentication.
-
-**Quickest way to get started:** Add `kavach_flutter` to your `pubspec.yaml`.
+**Keywords:** `flutter`, `dart`, `pub.dev`, `biometrics`, `faceid`, `touchid`, `security`, `methodchannels`
 
 ---
 
-## Table of Contents
+## 📖 Table of Contents
 
 - [Overview](#overview)
 - [Features](#features)
 - [Compatibility Matrix](#compatibility-matrix)
+- [Installation](#installation)
 - [Quick Start](#quick-start)
-- [Usage](#usage)
+- [Advanced Configuration](#advanced-configuration)
 - [Troubleshooting](#troubleshooting)
-- [Documentation](#documentation)
 - [License](#license)
 
-*(For global architecture, CI/CD, and security guidelines, see the [Root README](../../README.md))*
+*(For global architecture, CI/CD, and security guidelines, see the [Root Repository](../../README.md))*
 
 ---
 
-## Overview
+## 🚀 Overview
 
-**Technical Value:** Wraps the native `KavachClient` in iOS and Android using standard Flutter `MethodChannel` and Dart FFI to abstract away native complexities.
+The **Kavach Flutter SDK** provides a unified, cross-platform Dart interface to the highly secure native iOS (Swift) and Android (Kotlin) biometric and device fingerprinting APIs.
 
----
-
-## Features
-
-| Feature | Description | Status |
-| ------- | ----------- | ------ |
-| **MethodChannels** | Unified native communication layer. | Stable |
-| **Biometric Scans** | FaceID/TouchID/Fingerprint integration. | Stable |
+By utilizing standard Flutter `MethodChannels` and Dart FFI, it abstracts away complex OS-level cryptographic operations, allowing Flutter developers to seamlessly deploy military-grade biometric authentication.
 
 ---
 
-## Compatibility Matrix
+## ✨ Features
 
-| Component | Supported Version |
-| :--- | :--- |
-| **Flutter** | 3.0+ |
-| **Dart** | 3.0+ |
+| Feature | Description |
+| ------- | ----------- |
+| **MethodChannels** | Unified native communication layer built explicitly for iOS and Android. |
+| **Biometric Scans** | FaceID/TouchID (iOS) and BiometricPrompt (Android) integration. |
+| **Cross-Platform Telemetry** | Automatically gathers anonymized device fingerprints for KSE risk scoring. |
 
 ---
 
-## Quick Start
+## 💻 Compatibility Matrix
 
-### Install
-Add to your `pubspec.yaml`:
+| Component | Supported Version | Notes |
+| :--- | :--- | :--- |
+| **Flutter** | 3.0+ | |
+| **Dart** | 3.0+ | Sound null-safety required. |
+| **iOS** | iOS 13.0+ | |
+| **Android** | Min SDK 24+ | |
+
+---
+
+## 📦 Installation
+
+Add `kavach_flutter` to your `pubspec.yaml`:
+
 ```yaml
 dependencies:
+  flutter:
+    sdk: flutter
   kavach_flutter: ^1.0.4
+```
+
+Then, run:
+```bash
+flutter pub get
 ```
 
 ---
 
-## Usage
+## ⚡ Quick Start
 
-### Basic Usage
+### 1. Initialization
 ```dart
 import 'package:kavach_flutter/kavach_flutter.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   final kavach = KavachClient();
   
+  // Example call
+  await performSecureLogin(kavach);
+}
+```
+
+### 2. Authentication
+```dart
+Future<void> performSecureLogin(KavachClient kavach) async {
   try {
-    final token = await kavach.authenticate(reason: "Secure Login");
-    print("Token: $token");
+    // Triggers FaceID/BiometricPrompt
+    final token = await kavach.authenticate(reason: "Secure Login Required");
+    print("Authentication Successful! JWT Token: $token");
+    
+    // Navigate to next screen
   } catch (e) {
-    print("Failed: $e");
+    print("Biometric Authentication Failed: $e");
   }
 }
 ```
 
 ---
 
-## Troubleshooting
+## 🛠️ Advanced Configuration
 
-*   **Missing iOS Permissions:** Ensure `NSFaceIDUsageDescription` is in your iOS `Info.plist`.
+### iOS Configuration
+You must add `NSFaceIDUsageDescription` to your `ios/Runner/Info.plist`:
+
+```xml
+<key>NSFaceIDUsageDescription</key>
+<string>We need FaceID to securely verify your identity.</string>
+```
 
 ---
 
-## Documentation
+## 🐛 Troubleshooting
 
-*   [Kavach Ecosystem Root](../../README.md)
-*   [Flutter Sample](../../samples/kavach-flutter)
+*   **`MissingPluginException`:** 
+    If you see this on Android or iOS, ensure you have completely stopped the app and run `flutter run` again. Hot Restart will not compile newly added native MethodChannels.
 
 ---
 
-## License
+## 📄 License
 
 Distributed under the MIT License. See `LICENSE` for more information.

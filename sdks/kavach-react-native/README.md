@@ -1,113 +1,124 @@
-# @rajeev02/kavach-react-native
+# Kavach React Native SDK (`@rajeev02/kavach-react-native`)
 
-React Native (New Architecture) bindings for Kavach Shield Engine.
+Enterprise-grade React Native bindings for the Kavach Shield Engine, featuring synchronous JSI execution for zero-latency biometrics.
 
-[![Version](https://img.shields.io/badge/version-1.0.4-blue.svg)](https://www.npmjs.com/package/@rajeev02/kavach-react-native)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
-[![Platform Support](https://img.shields.io/badge/platform-React%20Native-lightgrey.svg)]()
+[![NPM Version](https://img.shields.io/npm/v/@rajeev02/kavach-react-native.svg?style=flat-square)](https://www.npmjs.com/package/@rajeev02/kavach-react-native)
+[![Language](https://img.shields.io/badge/Language-TypeScript%20%7C%20C++-blue.svg?style=flat-square)]()
+[![Platform Support](https://img.shields.io/badge/Platform-iOS%20%7C%20Android-lightgrey.svg?style=flat-square)]()
+[![License](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
----
-
-## TL;DR
-
-The React Native SDK provides ultra-fast JSI bindings to the native iOS and Android Kavach Shield Engine libraries.
-
-**Who should use it:** Mobile engineers building cross-platform React Native apps who need hardware-backed biometrics and device fingerprinting.
-
-**Quickest way to get started:**
-```bash
-npm install @rajeev02/kavach-react-native
-cd ios && pod install
-```
+**Keywords:** `react-native`, `expo`, `biometrics`, `faceid`, `touchid`, `security`, `jsi`, `turbomodules`, `android`, `ios`
 
 ---
 
-## Table of Contents
+## 📖 Table of Contents
 
 - [Overview](#overview)
 - [Features](#features)
 - [Compatibility Matrix](#compatibility-matrix)
+- [Installation](#installation)
 - [Quick Start](#quick-start)
-- [Usage](#usage)
+- [Advanced Configuration](#advanced-configuration)
 - [Troubleshooting](#troubleshooting)
-- [Documentation](#documentation)
 - [License](#license)
 
-*(For global architecture, CI/CD, and security guidelines, see the [Root README](../../README.md))*
+*(For global architecture, CI/CD, and security guidelines, see the [Root Repository](../../README.md))*
 
 ---
 
-## Overview
+## 🚀 Overview
 
-**Technical Value:** Leverages React Native's New Architecture (JSI / TurboModules) for zero-latency execution of cryptographic functions and biometric scanning directly from the native thread.
+The **Kavach React Native SDK** provides ultra-fast bindings to the native iOS and Android Kavach Shield Engine libraries. 
 
----
-
-## Features
-
-| Feature | Description | Status |
-| ------- | ----------- | ------ |
-| **TurboModules** | Synchronous JSI execution avoiding the RN Bridge. | Stable |
-| **Native Biometrics** | Triggers FaceID (iOS) and BiometricPrompt (Android). | Stable |
-| **Hardware Attestation** | Reads Secure Enclave / Keystore properties natively. | Stable |
+Instead of relying on the legacy asynchronous React Native Bridge, this SDK leverages the **New Architecture (JSI / TurboModules)** for synchronous, zero-latency execution of cryptographic functions and biometric scanning directly from the native thread.
 
 ---
 
-## Compatibility Matrix
+## ✨ Features
 
-| Component | Supported Version |
-| :--- | :--- |
-| **React Native** | 0.73.x+ (New Architecture enabled) |
-| **iOS** | iOS 13.0+ |
-| **Android** | Min SDK 24+ |
+| Feature | Description |
+| ------- | ----------- |
+| **TurboModules (JSI)** | Synchronous C++ execution avoiding the legacy RN Bridge. |
+| **Native Biometrics** | Triggers FaceID (iOS) and BiometricPrompt (Android) natively. |
+| **Hardware Attestation** | Reads Secure Enclave / Keystore properties to verify device integrity. |
+| **Expo Compatible** | Full support for bare workflows and Expo prebuilds. |
 
 ---
 
-## Quick Start
+## 💻 Compatibility Matrix
 
-### Install
+| Component | Supported Version | Notes |
+| :--- | :--- | :--- |
+| **React Native** | 0.73.x+ | New Architecture (Bridgeless) enabled. |
+| **iOS** | iOS 13.0+ | Requires FaceID capabilities. |
+| **Android** | Min SDK 24+ | Requires Biometric hardware. |
+
+---
+
+## 📦 Installation
+
 ```bash
+# NPM
 npm install @rajeev02/kavach-react-native
+
+# Yarn
+yarn add @rajeev02/kavach-react-native
 ```
 
-### Configure
-Link the native dependencies (if not using autolinking):
+### Native Linking (iOS Only)
+If you are using a bare React Native project, you must install the CocoaPods dependencies:
 ```bash
-cd ios && pod install
+cd ios && pod install && cd ..
 ```
 
 ---
 
-## Usage
+## ⚡ Quick Start
 
-### Basic Usage
+### 1. Requesting Biometric Authentication
 ```typescript
 import { KavachRN } from '@rajeev02/kavach-react-native';
 
-async function authenticate() {
-  const result = await KavachRN.promptBiometrics("Confirm Payment");
-  if (result.success) {
-    // Proceed with payment
+async function processPayment() {
+  try {
+    // Triggers native FaceID/TouchID prompt seamlessly
+    const result = await KavachRN.promptBiometrics("Confirm Payment of $50.00");
+    
+    if (result.success) {
+      console.log("User verified via hardware biometrics.");
+      // Proceed with payment API call
+    } else {
+      console.warn("User canceled the biometric prompt.");
+    }
+  } catch (error) {
+    console.error("Biometric hardware failure:", error);
   }
 }
 ```
 
 ---
 
-## Troubleshooting
+## 🛠️ Advanced Configuration
 
-*   **Build Failures (iOS):** Ensure `pod install` succeeded and that you are opening the `.xcworkspace` (not the `.xcodeproj`).
-*   **Build Failures (Android):** Ensure you are using Gradle 8.0+ and JDK 17.
+### iOS `Info.plist` Configuration
+Apple strictly requires a usage description string for FaceID. You must add the following key to your `ios/YourApp/Info.plist`:
 
----
-
-## Documentation
-
-*   [Kavach Ecosystem Root](../../README.md)
-*   [React Native Sample](../../samples/kavach-react-native)
+```xml
+<key>NSFaceIDUsageDescription</key>
+<string>We use FaceID to securely authenticate your high-risk transactions.</string>
+```
 
 ---
 
-## License
+## 🐛 Troubleshooting
+
+*   **App Crashes immediately on iOS when calling `promptBiometrics`:** 
+    You forgot to add `NSFaceIDUsageDescription` to your `Info.plist`.
+*   **Build Failures (Android):** 
+    Ensure you are using Gradle 8.0+ and JDK 17 in your `android/build.gradle`.
+
+---
+
+## 📄 License
 
 Distributed under the MIT License. See `LICENSE` for more information.

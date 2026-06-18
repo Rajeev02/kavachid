@@ -1,108 +1,129 @@
-# Kavach Go SDK
+# Kavach Go SDK (`kavach-go`)
 
-Go Backend SDK for Kavach Shield Engine integration.
+Enterprise-grade Go Backend SDK for Kavach Shield Engine integration, designed for high-throughput, low-latency microservices.
 
-[![Version](https://img.shields.io/badge/version-1.0.4-blue.svg)](https://pkg.go.dev/github.com/Rajeev02/kavachid/sdks/kavach-go)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
-[![Platform Support](https://img.shields.io/badge/platform-Go-lightgrey.svg)]()
+[![Go Reference](https://pkg.go.dev/badge/github.com/Rajeev02/kavachid/sdks/kavach-go.svg)](https://pkg.go.dev/github.com/Rajeev02/kavachid/sdks/kavach-go)
+[![Language](https://img.shields.io/badge/Language-Go-blue.svg?style=flat-square)]()
+[![Platform Support](https://img.shields.io/badge/Platform-Backend-lightgrey.svg?style=flat-square)]()
+[![License](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
----
-
-## TL;DR
-
-The Go SDK provides highly concurrent, low-latency utilities to integrate Go backends with the Kavach Shield Engine.
-
-**Who should use it:** Backend engineers building high-throughput Go microservices requiring token validation and KSE integration.
-
-**Quickest way to get started:** Install via `go get`.
+**Keywords:** `go`, `golang`, `microservices`, `security`, `jwt`, `authentication`, `kavach`, `risk-engine`, `goroutines`
 
 ---
 
-## Table of Contents
+## 📖 Table of Contents
 
 - [Overview](#overview)
 - [Features](#features)
 - [Compatibility Matrix](#compatibility-matrix)
+- [Installation](#installation)
 - [Quick Start](#quick-start)
-- [Usage](#usage)
+- [Advanced Configuration](#advanced-configuration)
 - [Troubleshooting](#troubleshooting)
-- [Documentation](#documentation)
 - [License](#license)
 
-*(For global architecture, CI/CD, and security guidelines, see the [Root README](../../README.md))*
+*(For global architecture, CI/CD, and security guidelines, see the [Root Repository](../../README.md))*
 
 ---
 
-## Overview
+## 🚀 Overview
 
-**Technical Value:** Uses native Goroutines to asynchronously fetch KSE Risk Scores in the background without blocking standard API I/O operations.
+The **Kavach Go SDK** provides highly concurrent utilities to integrate Go backends with the Kavach Shield Engine.
 
----
-
-## Features
-
-| Feature | Description | Status |
-| ------- | ----------- | ------ |
-| **Token Validation** | Ed25519 / RS256 JWT validation. | Stable |
-| **Goroutine Ready** | Thread-safe caching of KSE policies. | Stable |
+**Who should use it:** Backend engineers building high-throughput Go microservices (e.g., Gin, Echo, Fiber) requiring rapid token validation and dynamic KSE risk integration without bottlenecking standard API I/O operations.
 
 ---
 
-## Compatibility Matrix
+## ✨ Features
 
-| Component | Supported Version |
-| :--- | :--- |
-| **Go** | 1.20+ |
+| Feature | Description |
+| ------- | ----------- |
+| **Token Validation** | Ed25519 / RS256 JWT validation leveraging Go's native `crypto` libraries. |
+| **Goroutine Ready** | Thread-safe, non-blocking asynchronous fetching of KSE policies. |
+| **Memory Optimized** | Zero-allocation JWT parsing techniques for high-load systems. |
 
 ---
 
-## Quick Start
+## 💻 Compatibility Matrix
 
-### Install
+| Component | Supported Version | Notes |
+| :--- | :--- | :--- |
+| **Go** | 1.20+ | Recommended to use latest 1.22+. |
+| **Frameworks** | Gin, Echo, Fiber, `net/http` | Completely framework agnostic. |
+
+---
+
+## 📦 Installation
+
+Initialize your go module and fetch the package:
+
 ```bash
 go get github.com/Rajeev02/kavachid/sdks/kavach-go
 ```
 
 ---
 
-## Usage
+## ⚡ Quick Start
 
-### Basic Usage
+### Basic Usage (`net/http`)
 ```go
 package main
 
 import (
 	"fmt"
+	"net/http"
+	"strings"
+
 	"github.com/Rajeev02/kavachid/sdks/kavach-go"
 )
 
 func main() {
-	kavach := kavach.NewClient("https://api.yourdomain.com/kavach")
-	
-	valid, err := kavach.VerifyToken("eyJhbG...")
-	if err != nil || !valid {
-		fmt.Println("Access Denied!")
-	} else {
-		fmt.Println("Access Granted!")
-	}
+	// Initialize Kavach Client singleton
+	kavachClient := kavach.NewClient("https://api.yourdomain.com/kavach")
+
+	http.HandleFunc("/secure-data", func(w http.ResponseWriter, r *http.Request) {
+		// Extract Bearer Token
+		authHeader := r.Header.Get("Authorization")
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+
+		// Verify Cryptographic Token
+		valid, err := kavachClient.VerifyToken(tokenString)
+		if err != nil || !valid {
+			http.Error(w, "Access Denied", http.StatusUnauthorized)
+			return
+		}
+
+		fmt.Fprintln(w, "Access Granted to Highly Sensitive Data!")
+	})
+
+	fmt.Println("Server running on :8080")
+	http.ListenAndServe(":8080", nil)
 }
 ```
 
 ---
 
-## Troubleshooting
+## 🛠️ Advanced Configuration
 
-*   **Module Not Found:** If `go get` fails, ensure your GOPROXY is correctly configured or run `GOPRIVATE=github.com/Rajeev02/kavachid go get ...`.
+### Caching Risk Profiles
+To prevent Go from making synchronous HTTP requests to the core Kavach engine on every single API hit, the SDK supports thread-safe Redis caching.
+
+```go
+// Example: Setting up a Redis Cache for KSE Evaluations
+kavachClient.SetCache(redisClient, time.Minute * 5)
+```
 
 ---
 
-## Documentation
+## 🐛 Troubleshooting
 
-*   [Kavach Ecosystem Root](../../README.md)
-*   [pkg.go.dev Reference](https://pkg.go.dev/github.com/Rajeev02/kavachid/sdks/kavach-go)
+*   **Module Not Found:** 
+    If `go get` fails to find the module, ensure your `GOPROXY` is correctly configured to `https://proxy.golang.org,direct`.
+*   **Documentation Not Showing on pkg.go.dev:** 
+    Go's indexer caches documentation. If a recent version is missing, manually trigger the indexer by visiting `https://pkg.go.dev/github.com/Rajeev02/kavachid/sdks/kavach-go@latest`.
 
 ---
 
-## License
+## 📄 License
 
 Distributed under the MIT License. See `LICENSE` for more information.

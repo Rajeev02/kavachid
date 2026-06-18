@@ -1,108 +1,137 @@
-# KavachSDK (iOS)
+# Kavach SDK for iOS (`KavachSDK`)
 
-Native Swift iOS SDK for the Kavach Shield Engine.
+Enterprise-grade Native Swift iOS SDK for the Kavach Shield Engine, utilizing Apple's LocalAuthentication and Secure Enclave frameworks.
 
-[![Version](https://img.shields.io/badge/version-1.0.4-blue.svg)](https://cocoapods.org/pods/KavachSDK)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
-[![Platform Support](https://img.shields.io/badge/platform-iOS-lightgrey.svg)]()
+[![CocoaPods Version](https://img.shields.io/cocoapods/v/KavachSDK.svg?style=flat-square)](https://cocoapods.org/pods/KavachSDK)
+[![Language](https://img.shields.io/badge/Language-Swift_5-orange.svg?style=flat-square)]()
+[![Platform Support](https://img.shields.io/badge/Platform-iOS-lightgrey.svg?style=flat-square)]()
+[![License](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
----
-
-## TL;DR
-
-A pure Swift implementation of the Kavach Engine allowing hardware-backed FaceID/TouchID integrations.
-
-**Who should use it:** iOS Engineers building native Swift/SwiftUI applications.
-
-**Quickest way to get started:** Add `pod 'KavachSDK'` to your Podfile.
+**Keywords:** `ios`, `swift`, `cocoapods`, `faceid`, `touchid`, `localauthentication`, `secure-enclave`, `security`, `biometrics`
 
 ---
 
-## Table of Contents
+## 📖 Table of Contents
 
 - [Overview](#overview)
 - [Features](#features)
 - [Compatibility Matrix](#compatibility-matrix)
+- [Installation](#installation)
 - [Quick Start](#quick-start)
-- [Usage](#usage)
+- [Advanced Configuration](#advanced-configuration)
 - [Troubleshooting](#troubleshooting)
-- [Documentation](#documentation)
 - [License](#license)
 
-*(For global architecture, CI/CD, and security guidelines, see the [Root README](../../README.md))*
+*(For global architecture, CI/CD, and security guidelines, see the [Root Repository](../../README.md))*
 
 ---
 
-## Overview
+## 🚀 Overview
 
-**Technical Value:** Directly utilizes Apple's `LocalAuthentication` and `Security` frameworks to ensure biometric data never leaves the Secure Enclave.
+The **Kavach iOS SDK** is a pure Swift implementation of the Kavach Engine allowing hardware-backed FaceID/TouchID integrations.
 
----
-
-## Features
-
-| Feature | Description | Status |
-| ------- | ----------- | ------ |
-| **FaceID / TouchID** | Natively triggers LAContext biometric prompts. | Stable |
-| **Keychain Storage** | Cryptographically secures session tokens. | Stable |
+It directly utilizes Apple's `LocalAuthentication` and `Security` frameworks to ensure biometric cryptographic data never leaves the iOS Secure Enclave, providing enterprise-grade security for banking, healthcare, and enterprise applications.
 
 ---
 
-## Compatibility Matrix
+## ✨ Features
 
-| Component | Supported Version |
-| :--- | :--- |
-| **Swift** | 5.0+ |
-| **iOS** | 13.0+ |
+| Feature | Description |
+| ------- | ----------- |
+| **FaceID / TouchID** | Natively triggers `LAContext` biometric prompts with customized localization. |
+| **Keychain Storage** | Cryptographically secures session tokens within the iOS Keychain. |
+| **Jailbreak Detection** | Identifies compromised iOS environments before executing sensitive APIs. |
 
 ---
 
-## Quick Start
+## 💻 Compatibility Matrix
 
-### Install
-Add to your `Podfile`:
+| Component | Supported Version | Notes |
+| :--- | :--- | :--- |
+| **Swift** | 5.0+ | |
+| **iOS** | 13.0+ | Required for modern `LAContext` features. |
+| **Xcode** | 14.0+ | |
+
+---
+
+## 📦 Installation
+
+### CocoaPods
+CocoaPods is a dependency manager for Cocoa projects. Add the following to your `Podfile`:
+
 ```ruby
-pod 'KavachSDK', '~> 1.0.4'
+target 'YourApp' do
+  use_frameworks!
+  pod 'KavachSDK', '~> 1.0.4'
+end
 ```
+
+Then, run the following command:
 ```bash
 pod install
 ```
 
 ---
 
-## Usage
+## ⚡ Quick Start
 
-### Basic Usage
+### 1. Initialization
+Import the framework and access the shared singleton.
+
 ```swift
 import KavachSDK
+import UIKit
 
-let kavach = KavachClient.shared
+class LoginViewController: UIViewController {
+    let kavach = KavachClient.shared
+    
+    @IBAction func loginButtonTapped(_ sender: UIButton) {
+        authenticateUser()
+    }
+}
+```
 
-kavach.authenticate(reason: "Login to your account") { result in
-    switch result {
-    case .success(let token):
-        print("Success: \(token)")
-    case .failure(let error):
-        print("Error: \(error)")
+### 2. Authentication
+```swift
+func authenticateUser() {
+    kavach.authenticate(reason: "Login to your secure account") { result in
+        DispatchQueue.main.async {
+            switch result {
+            case .success(let token):
+                print("Authentication Successful. JWT: \(token)")
+                // Navigate to Main Dashboard
+            case .failure(let error):
+                print("Authentication Failed: \(error.localizedDescription)")
+            }
+        }
     }
 }
 ```
 
 ---
 
-## Troubleshooting
+## 🛠️ Advanced Configuration
 
-*   **Missing Info.plist Key:** You MUST add `NSFaceIDUsageDescription` to your application's `Info.plist` or the app will crash when attempting to use FaceID.
+### Info.plist Configuration
+You **MUST** provide a usage string for FaceID. If you fail to do this, iOS will terminate your application immediately upon calling `.authenticate()`.
+
+Add this to your `Info.plist`:
+```xml
+<key>NSFaceIDUsageDescription</key>
+<string>This app requires FaceID to verify high-risk transactions.</string>
+```
 
 ---
 
-## Documentation
+## 🐛 Troubleshooting
 
-*   [Kavach Ecosystem Root](../../README.md)
-*   [iOS Sample](../../samples/kavach-ios)
+*   **Error: `LAError.biometryNotAvailable`:** 
+    The user is running the app on a simulator without FaceID enrolled, or their physical device lacks biometric hardware.
+*   **Pod Install Fails:** 
+    Run `pod repo update` to ensure your CocoaPods Trunk index is synchronized with the latest version.
 
 ---
 
-## License
+## 📄 License
 
 Distributed under the MIT License. See `LICENSE` for more information.
