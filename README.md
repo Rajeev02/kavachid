@@ -1,407 +1,182 @@
-# Kavach Ecosystem
+# Kavach ID
 
-The modern, adaptive identity and security platform (Secure by Default, Configurable by Exception).
+An adaptive identity and risk evaluation platform implementing passwordless authentication (WebAuthn/FIDO2) and dynamic risk-based policies.
 
-[![Version](https://img.shields.io/badge/version-1.0.4-blue.svg)](https://github.com/Rajeev02/kavachid)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
-[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)]()
-[![Platform Support](https://img.shields.io/badge/platform-iOS%20%7C%20Android%20%7C%20Web%20%7C%20Flutter-lightgrey.svg)]()
-[![Security Scan](https://img.shields.io/badge/security-passing-success.svg)]()
-[![Release Status](https://img.shields.io/badge/release-stable-success.svg)]()
-
----
-
-## TL;DR
-
-Kavach acts as both an Enterprise B2B Platform (offering Identity & Risk APIs to external developers) and a tightly integrated consumer product suite (Wallet, Travel, Store, Rewards). It utilizes the **Kavach Shield Engine (KSE)** to silently score every API request in the background and dynamically trigger biometric step-ups only when anomalous behavior is detected.
-
-**Who should use it:** Enterprise developers, mobile engineers, and security architects looking to implement zero-trust, passwordless authentication (WebAuthn/FIDO2) with minimal friction.
-
-**Quickest way to get started:** Spin up the Docker stack and initialize the backend:
-```bash
-docker compose up -d db
-npx prisma db push && npx prisma generate
-npm run start:dev
-```
-
----
-
-## Table of Contents
-
-- [Overview](#overview)
-- [Features](#features)
-- [Screenshots](#screenshots)
-- [Compatibility Matrix](#compatibility-matrix)
-- [Technology Stack](#technology-stack)
-- [Architecture Overview](#architecture-overview)
-- [Project Structure](#project-structure)
-- [Prerequisites](#prerequisites)
-- [Quick Start](#quick-start)
-- [Environment Configuration](#environment-configuration)
-- [Usage](#usage)
-- [API Documentation](#api-documentation)
-- [Security](#security)
-- [Observability](#observability)
-- [Testing](#testing)
-- [Performance](#performance)
-- [Deployment](#deployment)
-- [CI/CD](#cicd)
-- [Developer Workflow](#developer-workflow)
-- [Migration Guide](#migration-guide)
-- [Troubleshooting](#troubleshooting)
-- [Documentation](#documentation)
-- [Roadmap](#roadmap)
-- [Architecture Decision Records (ADR)](#architecture-decision-records-adr)
-- [Contributing](#contributing)
-- [Changelog](#changelog)
-- [License](#license)
-- [Support](#support)
+[![Version](https://img.shields.io/badge/version-0.0.1-blue.svg)]()
+[![License](https://img.shields.io/badge/license-UNLICENSED-green.svg)]()
 
 ---
 
 ## Overview
 
-**Problem Statement:** Traditional authentication relies on passwords (vulnerable) and static 2FA/CAPTCHA prompts (high user friction).
-**Business Value:** Increases conversion rates by silently authenticating trusted users while maintaining compliance and stopping fraud via the Shield Engine.
-**Technical Value:** A unified monorepo providing natively compiled SDKs for all platforms (Swift, Kotlin, TypeScript, Dart, Go, Python) that abstract complex WebAuthn cryptography into a single function call.
-**Target Users:** Banks, E-commerce, Healthcare, and any enterprise requiring adaptive Risk-Based Authentication (RBA).
-**Use Cases:** Invisible login, high-risk transaction step-ups, VPN/Tor blocking, device fingerprinting.
+Kavach ID provides a centralized backend for managing multi-tenant identity, sessions, and device trust. It evaluates user requests against predefined risk policies and device fingerprints to trigger authentication step-ups selectively rather than requiring static, high-friction multifactor authentication on every request.
+
+**Problem Solved:** Balances security and user experience by silently scoring risk levels for incoming requests, invoking biometric verification (via WebAuthn/Passkeys) only when anomalous behavior is detected.
+
+**Scope:** The repository serves as a monorepo containing the core NestJS API backend and a suite of client SDKs to integrate risk-based authentication flows across multiple platforms.
 
 ---
 
 ## Features
 
-| Feature | Description | Status |
-| ------- | ----------- | ------ |
-| **Kavach Shield Engine (KSE)** | Silently scores risk (1-100) on every request based on telemetry. | Stable |
-| **WebAuthn / FIDO2** | Hardware-backed passwordless login (FaceID, TouchID, Windows Hello). | Stable |
-| **Device Fingerprinting** | Cryptographically links sessions to physical devices. | Stable |
-| **Dynamic Step-Up MFA** | Prompts biometric scans ONLY when the user's risk score spikes. | Stable |
-| **Admin Console** | React dashboard to configure risk policies and bypass rules. | Beta |
-
----
-
-
-
-## Compatibility Matrix
-
-| Component | Supported Version |
-| :--- | :--- |
-| **Node.js** | 18.x, 20.x, 22.x |
-| **React Native** | 0.73.x+ (New Architecture Ready) |
-| **Android** | Min SDK 24+ (Android 7.0+) |
-| **iOS** | iOS 13.0+ (Swift 5) |
-| **Database** | PostgreSQL 14+ |
-| **Flutter** | Dart 3.0+ |
+* **Multi-Tenant Identity Management** — Isolates users, devices, sessions, and roles per tenant.
+* **Risk-Based Authentication (RBA)** — Evaluates request context against `PolicyRule` schemas to compute a dynamic risk score.
+* **Passwordless (WebAuthn)** — Handles credential registration and assertion using `@simplewebauthn` for hardware-backed FaceID/TouchID/Windows Hello flows.
+* **Device Fingerprinting & Trust** — Cryptographically binds active sessions to trusted physical devices.
+* **Audit & Outbox Pattern** — Maintains immutable audit logs and reliable outbox event propagation for distributed transaction integrity.
 
 ---
 
 ## Technology Stack
 
-*   **Frontend:** React, React Native, Swift, Kotlin, Flutter
-*   **Backend:** Node.js (NestJS / Express), Go, Python (FastAPI/Django)
-*   **Database:** PostgreSQL (Prisma ORM)
-*   **Infrastructure:** Docker, Kubernetes
-*   **Monitoring:** Datadog / Prometheus (WIP)
-*   **Analytics:** PostHog
-*   **CI/CD:** GitHub Actions, NPM, Maven Central, CocoaPods, PyPI, Pub.dev
-
----
-
-## Architecture Overview
-
-Instead of showing an OTP prompt on every screen, Kavach silently scores requests:
-
-```mermaid
-graph TD;
-    A[Client App: iOS/Android/Web] -->|Device Fingerprint + JWT| B(Kavach SDK Middleware)
-    B -->|Evaluation Request| C{Kavach Shield Engine}
-    C -->|Risk < 30 & Level 1| D[ALLOW: Proceed to API]
-    C -->|VPN Detected & Level 3+| E[DENY / STEP_UP]
-    E -->|Trigger| F[FaceID / WebAuthn]
-    F -->|Success| D
-```
-
-**Data Flow:**
-1. The SDK captures hardware telemetry locally.
-2. The middleware attaches `x-device-fingerprint` to standard HTTP requests.
-3. KSE evaluates the request against active Admin Policies.
-4. If denied, a `401 STEP_UP_REQUIRED` is returned, instantly triggering the SDK's native biometric scanner.
+| Category       | Technology |
+| -------------- | ---------- |
+| Language       | TypeScript |
+| Framework      | NestJS / Express |
+| Database       | PostgreSQL |
+| ORM            | Prisma |
+| Authentication | WebAuthn, JWT (JOSE), Argon2 |
+| Testing        | Jest, Supertest |
+| Infrastructure | Docker, Docker Compose |
 
 ---
 
 ## Project Structure
 
-| Directory | Responsibility |
-| :--- | :--- |
-| `src/` | The core Node.js backend (Kavach ID Auth & Kavach Shield Engine). |
-| `sdks/` | The multi-platform native libraries (`kavach-web`, `kavach-ios`, etc.). |
-| `admin-console/` | The React dashboard used to configure KSE risk policies. |
-| `samples/` | Boilerplate implementations demonstrating how to integrate the SDKs. |
+```text
+.
+├── admin-console/    # Frontend for configuring risk policies
+├── kubernetes/       # Kubernetes deployment configurations
+├── prisma/           # Database schemas and migrations
+├── samples/          # Reference implementation examples
+├── sdks/
+│   ├── kavach-android/
+│   ├── kavach-flutter/
+│   ├── kavach-go/
+│   ├── kavach-ios/
+│   ├── kavach-python/
+│   ├── kavach-react-native/
+│   └── kavach-web/
+├── src/              # Core Node.js / NestJS backend implementation
+└── test/             # E2E test suites
+```
 
 ---
 
 ## Prerequisites
 
-*   **Node.js:** v20.x or higher
-*   **Docker:** v24.x or higher (for database)
-*   **Native Tools:** Xcode (for iOS), Android Studio (for Android)
+* **Node.js**: v20 or higher
+* **npm**: v9 or higher
+* **Docker & Docker Compose**: For local PostgreSQL provisioning
+* **TypeScript**: `ts-node` globally available (optional, for running scripts directly)
 
 ---
 
-## Quick Start
+## Installation & Quick Start
 
-### Clone
-```bash
-git clone https://github.com/Rajeev02/kavachid.git
-cd kavachid
-```
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/Rajeev02/kavachid.git
+   cd kavachid
+   ```
 
-### Install
-```bash
-npm install
-```
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-### Configure
-Copy the environment variables:
-```bash
-cp .env.example .env
-```
+3. **Start the Database Infrastructure:**
+   ```bash
+   docker-compose up -d db
+   ```
 
-### Run
-Spin up the database and start the server:
-```bash
-docker compose up -d db
-npx prisma db push && npx prisma generate
-npm run start:dev
-```
+4. **Initialize Database Schema:**
+   ```bash
+   npx prisma db push
+   npx prisma generate
+   ```
 
-### Verify
-```bash
-npx ts-node test-kse.ts
-```
+5. **Start the Application in Development Mode:**
+   ```bash
+   npm run start:dev
+   ```
+
+The API server will run locally. Webhook events can be routed through the mocked webhook listener provided by the `docker-compose.yml`.
 
 ---
 
-## Environment Configuration
+## Configuration
 
-| Variable | Required | Description | Example |
+Environment variables can be provided in a `.env` file or exported to the shell.
+
+| Variable | Description | Required | Default |
 | :--- | :--- | :--- | :--- |
-| `DATABASE_URL` | Yes | PostgreSQL connection string. | `postgresql://user:pass@localhost:5432/kavach` |
-| `JWT_SECRET` | Yes | Secret used for signing session tokens. | `super_secret_key` |
-| `KSE_STRICT_MODE` | No | Blocks all Tor/VPN traffic by default. | `true` |
-
----
-
-## Usage
-
-### Basic Usage
-The Kavach ecosystem provides drop-in native SDKs. For example, in a React app:
-
-```bash
-npm install @rajeev02/kavach-web
-```
-
-```typescript
-import { KavachClient } from '@rajeev02/kavach-web';
-const kavach = new KavachClient({ serverUrl: 'http://localhost:3000' });
-
-// Seamlessly trigger FaceID / TouchID
-const session = await kavach.loginWithBiometrics('user@example.com');
-```
-
-### Advanced Usage & Real World Examples
-Check the `samples/` directory for full production-grade reference implementations:
-*   `samples/kavach-react`
-*   `samples/kavach-ios`
-*   `samples/kavach-android`
-*   `samples/kavach-express`
-
----
-
-## API Documentation
-
-The Kavach Backend exposes several REST endpoints.
-
-**Authentication: `/api/v1/auth/biometric`**
-*   **Request:** WebAuthn Attestation Object.
-*   **Response:** `{ "token": "jwt...", "riskScore": 12 }`
-
-**Shield Engine Evaluation: `/api/v1/kse/evaluate`**
-*   **Request:** `{ "userId": "123", "actionLevel": 3, "ip": "1.1.1.1" }`
-*   **Response:** `200 OK` or `401 STEP_UP_REQUIRED`
-
-*(See `docs/api/` for complete Swagger definitions).*
-
----
-
-## Security
-
-*   **Authentication:** WebAuthn / FIDO2 public-key cryptography. No passwords stored.
-*   **Authorization:** JWT with short-lived scopes.
-*   **Device Attestation:** Validates iOS Secure Enclave and Android Keystore hardware signatures.
-*   **Threat Detection:** Real-time IP reputation, velocity checks, and Tor/VPN detection via KSE.
-
-### Responsible Disclosure
-If you find a security vulnerability, please do NOT open a public issue. Email `security@kavachid.org` immediately.
-
----
-
-## Observability
-
-*   **Logging:** Winston structured JSON logging.
-*   **Metrics:** Prometheus endpoints exposed at `/metrics`.
-*   **Analytics:** Telemetry events sent to PostHog for admin dashboards.
+| `DATABASE_URL` | PostgreSQL connection string | Yes | `postgresql://kavach:supersecretpassword@localhost:5432/kavachid?schema=public` |
+| `PORT` | API server listening port | No | `3000` |
+| `KAVACHID_MASTER_KEY` | Master cryptographic key for encryption | Yes (in prod) | *None* |
+| `WEBHOOK_URL` | Destination URL for emitted events | No | *None* |
+| `JWT_ACCESS_EXPIRES_IN` | Access token lifespan | No | `15m` |
+| `JWT_REFRESH_EXPIRES_IN` | Refresh token lifespan | No | `7d` |
 
 ---
 
 ## Testing
 
-### Unit Testing
+The project uses Jest for both unit and end-to-end testing.
+
+**Run unit tests:**
 ```bash
 npm run test
 ```
 
-### E2E Testing
+**Run tests in watch mode:**
+```bash
+npm run test:watch
+```
+
+**Run End-to-End (E2E) tests:**
 ```bash
 npm run test:e2e
 ```
 
-### Coverage
+**Generate coverage report:**
 ```bash
 npm run test:cov
 ```
 
 ---
 
-## Performance
-
-*   **Network Optimization:** SDKs aggressively cache policies to minimize round-trips.
-*   **Caching Strategy:** Redis is utilized to cache KSE risk profiles, reducing database load to < 5ms per evaluation.
-
----
-
 ## Deployment
 
-Kavach is designed to be self-hosted via Kubernetes or Docker Swarm.
+A Dockerfile is provided at the root for containerized deployments.
 
-### Production
-A production-ready Dockerfile is provided in `src/`.
+**Build the core image:**
 ```bash
 docker build -t kavach-core .
-docker run -p 3000:3000 kavach-core
 ```
 
----
-
-## CI/CD
-
-The repository uses strict GitHub Actions pipelines:
-Commit → Build (TSC/Swift/Kotlin) → Test (Jest/XCTest/JUnit) → Security Scan → Release (NPM/Maven/CocoaPods)
-
-To trigger a release across all 7 SDKs simultaneously, or to publish them one-by-one manually, see the comprehensive publishing guide:
-
-👉 **[Step-by-Step Publishing Guide](docs/PUBLISHING.md)**
+The stack can be deployed utilizing the provided `docker-compose.yml` or the resources in the `kubernetes/` directory for orchestration. Ensure `DATABASE_URL` and `KAVACHID_MASTER_KEY` are injected safely via secrets.
 
 ---
 
-## Developer Workflow
+## Security
 
-**Branch Strategy:**
-*   `main`: Production-ready, locked branch.
-*   `feature/*`: New SDK capabilities.
-*   `fix/*`: Bug fixes.
-
-**Commit Convention:**
-We enforce Conventional Commits:
-*   `feat: add WebAuthn support`
-*   `fix: resolve KSE timeout`
-*   `docs: update readme`
-
----
-
-## Migration Guide
-
-**v1.0.3 → v1.0.4**
-*   The Android SDK group ID was migrated to `io.github.rajeev02.kavach`. Update your `build.gradle` accordingly.
-
----
-
-## Troubleshooting
-
-*   **Installation failures (iOS):** Run `pod install --repo-update` to ensure CocoaPods Trunk is synchronized.
-*   **Build failures (Android):** Ensure you are using JDK 17+ and Gradle 8.0+.
-*   **NPM EOTP Error:** If `./publish.sh` fails with `EOTP`, you must run it manually in a terminal to satisfy NPM 2FA requirements.
-
----
-
-## Live Ecosystem Packages
-
-Kavach provides natively compiled, globally published SDKs for all major platforms:
-
-| Platform | Source Code | Live Registry Package |
-| :--- | :--- | :--- |
-| **🌍 Web** | [sdks/kavach-web](./sdks/kavach-web) | [NPM: @rajeev02/kavach-web](https://www.npmjs.com/package/@rajeev02/kavach-web) |
-| **📱 React Native** | [sdks/kavach-react-native](./sdks/kavach-react-native) | [NPM: @rajeev02/kavach-react-native](https://www.npmjs.com/package/@rajeev02/kavach-react-native) |
-| **🍎 iOS (Swift)** | [sdks/kavach-ios](./sdks/kavach-ios) | [CocoaPods: KavachSDK](https://cocoapods.org/pods/KavachSDK) |
-| **🤖 Android (Kotlin)** | [sdks/kavach-android](./sdks/kavach-android) | [Maven: io.github.rajeev02.kavach](https://central.sonatype.com/artifact/io.github.rajeev02.kavach/kavach-android) |
-| **🐦 Flutter** | [sdks/kavach-flutter](./sdks/kavach-flutter) | [Pub.dev: kavach_flutter](https://pub.dev/packages/kavach_flutter) |
-| **🐍 Python** | [sdks/kavach-python](./sdks/kavach-python) | [PyPI: rajeev02-kavach-sdk](https://pypi.org/project/rajeev02-kavach-sdk/) |
-| **🐹 Go** | [sdks/kavach-go](./sdks/kavach-go) | [pkg.go.dev](https://pkg.go.dev/github.com/Rajeev02/kavachid/sdks/kavach-go) |
-
----
-
-## Documentation
-
-*   [Web SDK Docs](./sdks/kavach-web/README.md)
-*   [React Native SDK Docs](./sdks/kavach-react-native/README.md)
-*   [iOS SDK Docs](./sdks/kavach-ios/README.md)
-*   [Android SDK Docs](./sdks/kavach-android/README.md)
-*   [Flutter SDK Docs](./sdks/kavach-flutter/README.md)
-*   [Python SDK Docs](./sdks/kavach-python/README.md)
-*   [Go SDK Docs](./sdks/kavach-go/README.md)
-
----
-
-## Roadmap
-
-*   [ ] Kubernetes Helm Charts
-*   [ ] Hardware YubiKey explicit support
-*   [ ] Advanced Anomaly Detection ML Models
-
----
-
-## Architecture Decision Records (ADR)
-
-*See `docs/adr/` for historical decisions.*
+* **Cryptography**: Utilizes `jose` for robust JWT issuance and signature validation. Private keys are securely managed and rotated via the `KeyPair` schema.
+* **Passwords**: Uses `argon2` for password hashing, though the primary authentication mechanism defaults to WebAuthn.
+* **Device Identity**: DPoP (Demonstrating Proof-of-Possession) public keys are supported to bind tokens strictly to the client device that requested them.
 
 ---
 
 ## Contributing
 
-We welcome contributions!
-1. Fork the Project.
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`).
-3. Commit your Changes (`git commit -m 'feat: add some AmazingFeature'`).
-4. Push to the Branch (`git push origin feature/AmazingFeature`).
-5. Open a Pull Request.
-
----
-
-## Changelog
-
-See `CHANGELOG.md` for version history.
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature-name`)
+3. Adhere to the existing code style via ESLint and Prettier (`npm run format`, `npm run lint`)
+4. Ensure all tests pass (`npm run test`)
+5. Submit a pull request detailing your changes
 
 ---
 
 ## License
 
-Distributed under the MIT License. See `LICENSE` for more information.
-
----
-
-## Support
-
-*   [GitHub Issues](https://github.com/Rajeev02/kavachid/issues)
-*   [GitHub Discussions](https://github.com/Rajeev02/kavachid/discussions)
+This project is currently marked as `UNLICENSED`. Please review repository policies before modifying or distributing.
